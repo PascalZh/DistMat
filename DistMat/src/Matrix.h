@@ -1,11 +1,13 @@
 #pragma once
 #include <vector>
+#include <algorithm>
+#include <ranges>
 #include "MatrixBase.h"
 
 namespace DistMat
 {
 
-template <typename Dtype, bool _Lazy = true>
+template <typename Dtype>
 class Matrix : public MatrixBase<Matrix<Dtype>> {
 public:
   using value_type = Dtype;
@@ -24,6 +26,19 @@ public:
   {
     // use C order instead of Fortran order
     return m_plain_object.at(row * rows() + col);
+  }
+
+  template<typename Dest>
+  void addTo_impl(Dest& other) const
+  {
+    if (this->rows() != other.rows() || this->cols() != other.rows()) {
+      // TODO
+      throw;
+    }
+    std::ranges::for_each(std::views::iota(Index(0), m_plain_object.size()), [this, &other](int i)
+    {
+      other.m_plain_object[i] += this->m_plain_object[i];
+    });
   }
 
   Index rows() const { return m_rows; }

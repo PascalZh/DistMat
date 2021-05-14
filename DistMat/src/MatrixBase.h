@@ -19,25 +19,25 @@ public:
         "static polymorphic function " #F " was not overwritten.");
 
   // Derived only need to define const version of accessWithoutBoundsChecking()
-  Derived::value_type& operator()(Index row, Index col)
+  auto& operator()(Index row, Index col)
   {
-    const_cast<Derived::value_type&>(
+    return const_cast<typename Derived::value_type&>(
       const_derived().accessWithoutBoundsChecking(row, col)
     );
   }
-  const Derived::value_type& operator()(Index row, Index col) const
+  const auto& operator()(Index row, Index col) const
   {
-    const_derived().accessWithoutBoundsChecking(row, col);
+    return const_derived().accessWithoutBoundsChecking(row, col);
   }
-  Derived::value_type& at(Index row, Index col)
+  auto& at(Index row, Index col)
   {
-    const_cast<Derived::value_type&>(
+    return const_cast<typename Derived::value_type&>(
       const_derived().accessWithBoundsChecking(row, col)
     );
   }
-  const Derived::value_type& at(Index row, Index col) const
+  const auto& at(Index row, Index col) const
   {
-    const_derived().accessWithBoundsChecking(row, col);
+    return const_derived().accessWithBoundsChecking(row, col);
   }
 
   template <typename Dest>
@@ -59,7 +59,7 @@ public:
   // compiler will not error, add EnsureOverwritten to avoid this.
   Index rows() const { EnsureOverwritten(rows); return derived().rows(); }
   Index cols() const { EnsureOverwritten(cols); return derived().cols(); }
-  Index size() const { return rows() * derived().cols(); }
+  Index size() const { return rows() * cols(); }
 
   template <typename OtherDerived>
   MatrixBase<Derived>& operator=(const MatrixBase<OtherDerived>& other)
