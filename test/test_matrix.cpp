@@ -10,7 +10,11 @@ int main(int argc, char const *argv[])
   Matrix<int> B(3, 3);
   B(0, 0) = 3;
   A = A + B;
+  A = A * 5;
   cout << A(0, 0) << endl;
   cout << A(0, 2) << endl;
+  cout << "hello" << endl;
+  cout << A.size() << endl;
+  cout << A.rows() << endl;
   return 0;
 }

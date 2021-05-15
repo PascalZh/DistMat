@@ -1,107 +1,138 @@
 #pragma once
-#include <iostream>
+#include <concepts>
+
 namespace DistMat
 {
 using Index = size_t;
+using std::same_as, std::convertible_to;
 
-template <typename Derived>
+// MatrixBase_traits should be defined to get Scalar of Derived
+template<typename Derived>
+struct MatrixBase_traits;
+template<typename Derived>
+class MatrixBase;
+
+// Concepts
+template<typename _T, typename _Matrix>
+concept IsScalarOf = same_as<_T, typename MatrixBase_traits<_Matrix>::scalar_type>;
+
+// if MatrixBase has interface func and impl func the same name, it must be treated
+// like this.
+template<typename T>
+concept Is_rows_Implemented = !same_as<decltype(&T::rows), decltype(&T::Base::rows)>;
+template<typename T>
+concept Is_cols_Implemented = !same_as<decltype(&T::cols), decltype(&T::Base::cols)>;
+template<typename T>
+concept Is_size_Implemented = !same_as<decltype(&T::size), decltype(&T::Base::size)>;
+
+template<typename T>
+concept IsAnyTwoOf_rows_cols_size_Implemented =
+Is_rows_Implemented<T> && Is_cols_Implemented<T> ||
+Is_rows_Implemented<T> && Is_size_Implemented<T> ||
+Is_cols_Implemented<T> && Is_size_Implemented<T>;
+
+template<typename Derived>
+concept IsMatrixBaseImplemented = requires (
+  Derived mat, const Derived cmat, Index idx, typename Derived::Scalar scalar, void* dst
+  ) {
+  { cmat(idx, idx) }    -> same_as<const typename Derived::Scalar&>;
+  { cmat.at(idx, idx) } -> same_as<const typename Derived::Scalar&>;
+  { mat.mulByScalar(scalar) } -> same_as<void>;
+  ///> test evalTo with void*, just ensure evalTo is implemented as a template
+  { cmat.template evalTo<void*>(dst) }     -> same_as<void>;
+  { cmat.template addTo<void*>(dst) }      -> same_as<void>;
+  { cmat.template subTo<void*>(dst) }      -> same_as<void>;
+  { cmat.template mulLeftTo<void*>(dst) }  -> same_as<void>;
+  { cmat.template mulRightTo<void*>(dst) } -> same_as<void>;
+} && IsAnyTwoOf_rows_cols_size_Implemented<Derived>;
+
+template<typename Derived>
 class MatrixBase {
-private:
-  Derived& derived() { return *static_cast<Derived*>(this); }
-  const Derived& derived() const { return *static_cast<const Derived*>(this); }
+public:
+  ~MatrixBase() requires IsMatrixBaseImplemented<Derived> {}
+  Derived& derived()
+  { return *static_cast<Derived*>(this); }
+  const Derived& derived() const
+  { return *static_cast<const Derived*>(this); }
 
   const Derived& const_derived() { return const_cast<const Derived&>(derived()); }
-  const Derived& const_derived() const { return *static_cast<const Derived*>(this); }
+  const Derived& const_derived() const { return derived(); }
+
+  using Scalar = typename MatrixBase_traits<Derived>::scalar_type;
+
+  Scalar& operator()(Index row, Index col)
+  { return const_cast<Scalar&>(const_derived()(row, col)); }
+  Scalar& at(Index row, Index col)
+  { return const_cast<Scalar&>(const_derived().at(row, col)); }
+
+  ///> Define one of three for Derived if only other two are defined.
+  Index rows() const { return derived().size() / derived().cols(); }
+  Index cols() const { return derived().size() / derived().rows(); }
+  Index size() const { return derived().rows() * derived().cols(); }
+
 public:
-
-#define	EnsureOverwritten(F)	static_assert(!std::is_same<decltype(&Derived::F),\
-        decltype(&MatrixBase<Derived>::F)>::value,\
-        "static polymorphic function " #F " was not overwritten.");
-
-  // Derived only need to define const version of accessWithoutBoundsChecking()
-  auto& operator()(Index row, Index col)
+  template<typename OtherDerived>
+  Derived& operator=(const MatrixBase<OtherDerived>& other)
   {
-    return const_cast<typename Derived::value_type&>(
-      const_derived().accessWithoutBoundsChecking(row, col)
-    );
-  }
-  const auto& operator()(Index row, Index col) const
-  {
-    return const_derived().accessWithoutBoundsChecking(row, col);
-  }
-  auto& at(Index row, Index col)
-  {
-    return const_cast<typename Derived::value_type&>(
-      const_derived().accessWithBoundsChecking(row, col)
-    );
-  }
-  const auto& at(Index row, Index col) const
-  {
-    return const_derived().accessWithBoundsChecking(row, col);
+    other.derived().evalTo(derived());
+    return derived();
   }
 
-  template <typename Dest>
-  void evalTo(Dest& dst) const { derived().evalTo_impl(dst); }
-
-  template <typename Dest>
-  void addTo(Dest& dst) const { derived().addTo_impl(dst); }
-
-  template <typename Dest>
-  void subTo(Dest& dst) const { derived().subTo_impl(dst); }
-
-  template <typename Dest>
-  void mulLeftTo(Dest& dst) const { derived().mulLeftTo_impl(dst); }
-
-  template <typename Dest>
-  void mulRightTo(Dest& dst) const { derived().mulRightTo_impl(dst); }
-
-  // When a Base::f calls the Derived::f, but Derived::f is not defined,
-  // compiler will not error, add EnsureOverwritten to avoid this.
-  Index rows() const { EnsureOverwritten(rows); return derived().rows(); }
-  Index cols() const { EnsureOverwritten(cols); return derived().cols(); }
-  Index size() const { return rows() * cols(); }
-
-  template <typename OtherDerived>
-  MatrixBase<Derived>& operator=(const MatrixBase<OtherDerived>& other)
+  template<typename OtherDerived>
+  Derived& operator+=(const MatrixBase<OtherDerived>& other)
   {
-    other.evalTo(derived());
+    other.derived().addTo(derived());
+    return derived();
+  }
+  
+  template<typename OtherDerived>
+  Derived& operator-=(const MatrixBase<OtherDerived>& other)
+  {
+    other.derived().subTo(derived());
+    return derived();
   }
 
-  template <typename OtherDerived>
-  MatrixBase<Derived>& operator+=(const MatrixBase<OtherDerived>& other)
-  {
-    other.addTo(derived());
-  }
-
-  template <typename OtherDerived>
-  MatrixBase<Derived>& operator-=(const MatrixBase<OtherDerived>& other)
-  {
-    other.subTo(derived());
-  }
 };
 
-template <typename Dest, typename Derived>
+template<typename Dest, typename Derived>
 Dest operator+(const Dest& lhs, const MatrixBase<Derived>& rhs)
 {
   Dest tmp = lhs;
-  rhs.addTo(tmp);
+  rhs.derived().addTo(tmp);
   return tmp;
 }
 
-template <typename Dest, typename Derived>
+template<typename Dest, typename Derived>
 Dest operator-(const Dest& lhs, const MatrixBase<Derived>& rhs)
 {
   Dest tmp = lhs;
-  rhs.subTo(tmp);
+  rhs.derived().subTo(tmp);
   return tmp;
 }
 
-template <typename Dest, typename Derived>
+template<typename Dest, typename Derived>
+requires (!IsScalarOf<Dest, Derived>)
 Dest operator*(const Dest& lhs, const MatrixBase<Derived>& rhs)
 {
   Dest tmp = lhs;
-  rhs.mulRightTo(tmp);
+  rhs.derived().mulRightTo(tmp);
   return tmp;
+}
+
+template<typename Scalar, typename Derived>
+requires IsScalarOf<Scalar, Derived>
+Derived operator*(const Scalar& lhs, const MatrixBase<Derived>& rhs)
+{
+  Derived tmp = rhs.derived();
+  tmp.derived().mulByScalar(lhs);
+  return tmp;
+}
+
+template<typename Scalar, typename Derived>
+requires IsScalarOf<Scalar, Derived>
+Derived operator*(const MatrixBase<Derived>& lhs, const Scalar& rhs)
+{
+  return rhs * lhs;
 }
 
 } // end of namespace DistMat

@@ -1,0 +1,30 @@
+{
+  "tasks": [
+    {
+      "type": "cppbuild",
+      "label": "build test_matrix",
+      "command": "/usr/bin/g++-10",
+      "args": [
+        "-g",
+        "${workspaceFolder}/test/test_matrix.cpp",
+        "-o",
+        "${workspaceFolder}/test_matrix.out",
+        "-I",
+        "${workspaceFolder}/DistMat",
+        "-std=c++20"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "detail": ""
+    }
+  ],
+  "version": "2.0.0"
+}

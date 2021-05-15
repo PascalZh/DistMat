@@ -7,29 +7,45 @@
 namespace DistMat
 {
 
-template <typename Dtype>
-class Matrix : public MatrixBase<Matrix<Dtype>> {
+template <typename Scalar>
+class Matrix;
+template <typename Scalar>
+struct MatrixBase_traits<Matrix<Scalar>> {
+  using scalar_type = Scalar;
+};
+
+template <typename _Scalar>
+class Matrix : public MatrixBase<Matrix<_Scalar>> {
 public:
-  using value_type = Dtype;
+  using Base = MatrixBase<Matrix<_Scalar>>;
+  using Scalar = typename Base::Scalar;
+  using Base::const_derived;
 
   Matrix() = default;
   Matrix(Index rows, Index cols)
     : m_plain_object(rows * cols), m_rows(rows), m_cols(cols) { }
 
-  const value_type& accessWithoutBoundsChecking(Index row, Index col) const
+  using Base::operator();
+  using Base::at;
+  const Scalar& operator()(Index row, Index col) const
   {
     // use C order instead of Fortran order
-    return m_plain_object[row * rows() + col];
+    return m_plain_object[row * this->rows() + col];
   }
 
-  const value_type& accessWithBoundsChecking(Index row, Index col) const
+  const Scalar& at(Index row, Index col) const
   {
     // use C order instead of Fortran order
-    return m_plain_object.at(row * rows() + col);
+    return m_plain_object.at(row * this->rows() + col);
   }
 
   template<typename Dest>
-  void addTo_impl(Dest& other) const
+  void evalTo(Dest& other) const
+  {
+    // TODO
+  }
+  template<typename Dest>
+  void addTo(Dest& other) const
   {
     if (this->rows() != other.rows() || this->cols() != other.rows()) {
       // TODO
@@ -40,11 +56,32 @@ public:
       other.m_plain_object[i] += this->m_plain_object[i];
     });
   }
+  template<typename Dest>
+  void subTo(Dest& other) const
+  { 
+    // TODO
+  }
+  template<typename Dest>
+  void mulLeftTo(Dest& other) const
+  { 
+    // TODO
+  }
+  template<typename Dest>
+  void mulRightTo(Dest& other) const
+  { 
+    // TODO
+  }
+
+  void mulByScalar(Scalar scalar)
+  {
+    // TODO
+  }
 
   Index rows() const { return m_rows; }
   Index cols() const { return m_cols; }
+  Index size() const { return m_plain_object.size(); }
 private:
-  std::vector<value_type> m_plain_object;
+  std::vector<Scalar> m_plain_object;
   Index m_rows = 0;
   Index m_cols = 0;
 };
