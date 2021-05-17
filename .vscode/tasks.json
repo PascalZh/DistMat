@@ -4,9 +4,14 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "build",
+      "label": "build with cmake",
       "type": "shell",
-      "command": "cmake --build build/"
+      "command": "cmake --build build/",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
     }
   ]
 }

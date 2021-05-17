@@ -38,17 +38,18 @@ concept IsMatrixBaseImplemented = requires (
   { cmat(idx, idx) }    -> same_as<const typename Derived::Scalar&>;
   { cmat.at(idx, idx) } -> same_as<const typename Derived::Scalar&>;
   { mat.mulByScalar(scalar) } -> same_as<void>;
-  ///> test evalTo with void*, just ensure evalTo is implemented as a template
-  { cmat.template evalTo<void*>(dst) }     -> same_as<void>;
-  { cmat.template addTo<void*>(dst) }      -> same_as<void>;
-  { cmat.template subTo<void*>(dst) }      -> same_as<void>;
-  { cmat.template mulLeftTo<void*>(dst) }  -> same_as<void>;
-  { cmat.template mulRightTo<void*>(dst) } -> same_as<void>;
+  // test func with Derived, just ensure func is implemented as a template
+  { cmat.template evalTo<Derived>(mat) }     -> same_as<void>;
+  { cmat.template addTo<Derived>(mat) }      -> same_as<void>;
+  { cmat.template subTo<Derived>(mat) }      -> same_as<void>;
+  { cmat.template mulLeftTo<Derived>(mat) }  -> same_as<void>;
+  { cmat.template mulRightTo<Derived>(mat) } -> same_as<void>;
 } && IsAnyTwoOf_rows_cols_size_Implemented<Derived>;
 
 template<typename Derived>
 class MatrixBase {
 public:
+  // postpone the concept here, because during the construction of the MatrixBase, it doesn't know anything about Derived.
   ~MatrixBase() requires IsMatrixBaseImplemented<Derived> {}
   Derived& derived()
   { return *static_cast<Derived*>(this); }

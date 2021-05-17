@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.16)
 project(DistMat)
 
 set(CMAKE_CXX_COMPILER "/usr/bin/g++-10")
-add_compile_options(-std=c++20)
+set(CMAKE_CXX_STANDARD 20)
 
 include_directories(DistMat/)
 

@@ -8,7 +8,7 @@
       "name": "(gdb) Launch",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/test/test_matrix",
+      "program": "${workspaceFolder}/build/test_matrix.out",
       "args": [],
       "stopAtEntry": false,
       "cwd": "${fileDirname}",
