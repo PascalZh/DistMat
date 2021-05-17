@@ -33,3 +33,6 @@
 
 # Asm
 *.s
+
+# cmake
+/build
