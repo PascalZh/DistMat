@@ -22,6 +22,13 @@ public:
   using Base::const_derived;
 
   Matrix() = default;
+  Matrix(const Matrix<_Scalar>& other) = default;
+  Matrix<_Scalar>& operator=(const Matrix<_Scalar>& other)
+  {
+    if (this != &other)
+      other.evalTo(*this);
+    return *this;
+  }
   Matrix(Index rows, Index cols)
     : m_plain_object(rows * cols), m_rows(rows), m_cols(cols) {}
 
@@ -30,30 +37,22 @@ public:
 
   using Base::operator();
   using Base::at;
+  using Base::operator[];
   const Scalar& operator()(Index row, Index col) const
   {
     // use C order instead of Fortran order
     return m_plain_object[row * this->rows() + col];
   }
-
   const Scalar& at(Index row, Index col) const
   {
     // use C order instead of Fortran order
     return m_plain_object.at(row * this->rows() + col);
   }
-
-  template<typename Dest>
-  void evalTo(Dest& other) const
+  const Scalar& operator[](Index i) const
   {
-    if (this->rows() != other.rows() || this->cols() != other.cols()) {
-      // TODO
-      throw;
-    }
-    std::ranges::for_each(std::views::iota(Index(0), m_plain_object.size()), [this, &other](int i)
-    {
-      other.m_plain_object[i] = this->m_plain_object[i];
-    });
+    return m_plain_object[i];
   }
+
   template<typename Dest>
   void addTo(Dest& other) const
   {
@@ -116,6 +115,9 @@ public:
   Index rows() const { return m_rows; }
   Index cols() const { return m_cols; }
   Index size() const { return m_plain_object.size(); }
+  using Base::operator=;
+  using Base::operator+=;
+  using Base::operator-=;
 private:
   std::vector<Scalar> m_plain_object;
   Index m_rows = 0;

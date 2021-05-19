@@ -39,3 +39,4 @@ struct Bench {
   codes\
   allBenches.back().result.duration = chrono::steady_clock::now() - bench_start;\
   std::cout << allBenches.back().result.duration.count() << "ms" << std::endl;
+  

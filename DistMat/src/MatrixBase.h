@@ -1,10 +1,10 @@
 #pragma once
 #include <concepts>
+#include "Error.h"
+#include "Type.h"
 
 namespace DistMat
 {
-using Index = size_t;
-using std::same_as, std::convertible_to;
 
 // MatrixBase_traits should be defined to get Scalar of Derived
 template<typename Derived>
@@ -13,11 +13,12 @@ template<typename Derived>
 class MatrixBase;
 
 // Concepts
+// TODO ensure Derived implement standard(non-template) operator=
 template<typename _T, typename _Matrix>
 concept IsScalarOf = same_as<_T, typename MatrixBase_traits<_Matrix>::scalar_type>;
 
-// if MatrixBase has interface func and impl func the same name, it must be treated
-// like this.
+// if MatrixBase has interface func and impl func the same name, it must be
+// treated like this to avoid recurring.
 template<typename T>
 concept Is_rows_Implemented = !same_as<decltype(&T::rows), decltype(&T::Base::rows)>;
 template<typename T>
@@ -33,12 +34,14 @@ Is_cols_Implemented<T> && Is_size_Implemented<T>;
 
 template<typename Derived>
 concept IsMatrixBaseImplemented = requires (
-  Derived mat, const Derived cmat, Index idx, typename Derived::Scalar scalar, void* dst
+  Derived mat, const Derived cmat, Index row, Index col, Index i,
+  typename Derived::Scalar scalar
   ) {
-  { cmat(idx, idx) }    -> same_as<const typename Derived::Scalar&>;
-  { cmat.at(idx, idx) } -> same_as<const typename Derived::Scalar&>;
+  { cmat(row, col) }    -> same_as<const typename Derived::Scalar&>;
+  { cmat.at(row, col) } -> same_as<const typename Derived::Scalar&>;
+  { cmat[i] }         -> same_as<const typename Derived::Scalar&>;
   { mat.mulByScalar(scalar) } -> same_as<void>;
-  // test func with Derived, just ensure func is implemented as a template
+  // test func with Derived, ensure func is implemented as a template
   { cmat.template evalTo<Derived>(mat) }     -> same_as<void>;
   { cmat.template addTo<Derived>(mat) }      -> same_as<void>;
   { cmat.template subTo<Derived>(mat) }      -> same_as<void>;
@@ -49,7 +52,8 @@ concept IsMatrixBaseImplemented = requires (
 template<typename Derived>
 class MatrixBase {
 public:
-  // postpone the concept here, because during the construction of the MatrixBase, it doesn't know anything about Derived.
+  // postpone the concept here, because during the construction of the
+  // MatrixBase, it doesn't know anything about Derived.
   ~MatrixBase() requires IsMatrixBaseImplemented<Derived> {}
   Derived& derived()
   { return *static_cast<Derived*>(this); }
@@ -65,11 +69,24 @@ public:
   { return const_cast<Scalar&>(const_derived()(row, col)); }
   Scalar& at(Index row, Index col)
   { return const_cast<Scalar&>(const_derived().at(row, col)); }
+  Scalar& operator[](Index i)
+  { return const_cast<Scalar&>(const_derived()[i]); }
 
   ///> Define one of three for Derived if only other two are defined.
   Index rows() const { return derived().size() / derived().cols(); }
   Index cols() const { return derived().size() / derived().rows(); }
   Index size() const { return derived().rows() * derived().cols(); }
+
+  template<typename Dest>
+  void evalTo(Dest& other) const
+  {
+    CHECK_DIM(other, derived());
+    std::ranges::for_each(std::views::iota(Index(0), derived().size()),
+    [this, &other](Index i)
+    {
+      other[i] = derived()[i];
+    });
+  }
 
 public:
   template<typename OtherDerived>
@@ -125,7 +142,7 @@ requires IsScalarOf<Scalar, Derived>
 Derived operator*(const Scalar& lhs, const MatrixBase<Derived>& rhs)
 {
   Derived tmp = rhs.derived();
-  tmp.derived().mulByScalar(lhs);
+  tmp.mulByScalar(lhs);
   return tmp;
 }
 

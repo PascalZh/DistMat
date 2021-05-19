@@ -10,6 +10,7 @@ int main(int argc, char const *argv[])
   A(0, 0) = 2;
   Matrix<int> B(3, 3);
   B(0, 0) = 3;
+  A = B;
   BENCH("add", 1, "add and assign",
         A = A + B;
         A = A * 5;)
