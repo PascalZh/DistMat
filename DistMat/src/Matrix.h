@@ -8,27 +8,25 @@ namespace DistMat
 {
 
 template <typename Scalar>
-class Matrix;
-template <typename Scalar>
-struct MatrixBase_traits<Matrix<Scalar>> {
-  using scalar_type = Scalar;
-};
-
-template <typename _Scalar>
-class Matrix : public MatrixBase<Matrix<_Scalar>> {
+class Matrix : public MatrixBase<Matrix<Scalar>, Scalar> {
 public:
-  using Base = MatrixBase<Matrix<_Scalar>>;
-  using Scalar = typename Base::Scalar;
+  using Base = MatrixBase<Matrix<Scalar>, Scalar>;
   using Base::const_derived;
 
+  // postpone the concept here, because during the construction of the
+  // MatrixBase, it doesn't know anything about Derived.
+  ~Matrix() requires IsMatrixBaseImplemented<Matrix<Scalar>, Scalar> {}
   Matrix() = default;
-  Matrix(const Matrix<_Scalar>& other) = default;
-  Matrix<_Scalar>& operator=(const Matrix<_Scalar>& other)
+  Matrix(const Matrix<Scalar>& other) = default;
+
+  using Base::operator=;
+  Matrix<Scalar>& operator=(const Matrix<Scalar>& other)
   {
     if (this != &other)
       other.evalTo(*this);
     return *this;
   }
+  
   Matrix(Index rows, Index cols)
     : m_plain_object(rows * cols), m_rows(rows), m_cols(cols) {}
 
@@ -53,30 +51,6 @@ public:
     return m_plain_object[i];
   }
 
-  template<typename Dest>
-  void addTo(Dest& other) const
-  {
-    if (this->rows() != other.rows() || this->cols() != other.cols()) {
-      // TODO
-      throw;
-    }
-    std::ranges::for_each(std::views::iota(Index(0), m_plain_object.size()), [this, &other](int i)
-    {
-      other.m_plain_object[i] += this->m_plain_object[i];
-    });
-  }
-  template<typename Dest>
-  void subTo(Dest& other) const
-  {
-    if (this->rows() != other.rows() || this->cols() != other.cols()) {
-      // TODO
-      throw;
-    }
-    std::ranges::for_each(std::views::iota(Index(0), m_plain_object.size()), [this, &other](int i)
-    {
-      other.m_plain_object[i] -= this->m_plain_object[i];
-    });
-  }
   template<typename Dest>
   void mulLeftTo(Dest& other) const
   { 
@@ -115,9 +89,6 @@ public:
   Index rows() const { return m_rows; }
   Index cols() const { return m_cols; }
   Index size() const { return m_plain_object.size(); }
-  using Base::operator=;
-  using Base::operator+=;
-  using Base::operator-=;
 private:
   std::vector<Scalar> m_plain_object;
   Index m_rows = 0;
