@@ -1,7 +1,5 @@
 #pragma once
 #include <vector>
-#include <algorithm>
-#include <ranges>
 #include "MatrixBase.h"
 
 namespace DistMat
@@ -26,8 +24,8 @@ public:
       other.evalTo(*this);
     return *this;
   }
-  
-  Matrix(Index rows, Index cols)
+
+  Matrix(Index rows, Index cols) // TODO: by default elements of vector is value-initialized, which may affects performance.
     : m_plain_object(rows * cols), m_rows(rows), m_cols(cols) {}
 
   Matrix(std::vector<Scalar> plain_object,Index rows, Index cols)
@@ -49,6 +47,11 @@ public:
   const Scalar& operator[](Index i) const
   {
     return m_plain_object[i];
+  }
+
+  bool operator==(const Matrix<Scalar>& other) const
+  {
+    return this->m_plain_object == other.m_plain_object;
   }
 
   template<typename Dest>
@@ -79,11 +82,6 @@ public:
         other->m_plain_object[m * this->rows() + i];
       }
     }
-  }
-
-  void mulByScalar(Scalar scalar)
-  {
-    // TODO
   }
 
   Index rows() const { return m_rows; }

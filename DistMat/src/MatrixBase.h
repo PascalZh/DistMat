@@ -1,5 +1,7 @@
 #pragma once
 #include <concepts>
+#include <ranges>
+#include <algorithm>
 #include "Error.h"
 #include "Type.h"
 
@@ -39,7 +41,7 @@ concept IsMatrixBaseImplemented = requires (
   { cmat.template subTo<Derived>(mat) }      -> same_as<void>;
   { cmat.template mulLeftTo<Derived>(mat) }  -> same_as<void>;
   { cmat.template mulRightTo<Derived>(mat) } -> same_as<void>;
-} && IsAnyTwoOf_rows_cols_size_Implemented<Derived> && IsScalar<Scalar>;
+} && IsAnyTwoOf_rows_cols_size_Implemented<Derived> && IsScalar<Scalar> && std::equality_comparable<Derived>;
 
 template<typename Derived, typename Scalar>
 class MatrixBase {
@@ -52,103 +54,86 @@ public:
   const Derived& const_derived() const { return derived(); }
 
   Scalar& operator()(Index row, Index col)
-  { return const_cast<Scalar&>(const_derived()(row, col)); }
+  {
+    return const_cast<Scalar&>(const_derived()(row, col));
+  }
   Scalar& at(Index row, Index col)
-  { return const_cast<Scalar&>(const_derived().at(row, col)); }
+  {
+    return const_cast<Scalar&>(const_derived().at(row, col));
+  }
   Scalar& operator[](Index i)
-  { return const_cast<Scalar&>(const_derived()[i]); }
+  {
+    return const_cast<Scalar&>(const_derived()[i]);
+  }
 
   ///> Define one of three for Derived if only other two are defined.
   Index rows() const { return derived().size() / derived().cols(); }
   Index cols() const { return derived().size() / derived().rows(); }
   Index size() const { return derived().rows() * derived().cols(); }
 
-  template<typename Dest>
-  void evalTo(Dest& other) const requires derived_from<Dest, MatrixBase<Dest, Scalar>>
+private:
+  void for_each_el(auto func)
   {
-    CHECK_DIM(other, derived());
-    ranges::for_each(views::iota(Index(0), derived().size()), [this, &other](Index i)
-    {
-      other[i] = derived()[i];
-    });
+    ranges::for_each(views::iota(Index(0), derived().size()), func);
   }
-
-  template<typename Dest>
-  void addTo(Dest& other) const requires derived_from<Dest, MatrixBase<Dest, Scalar>>
+  void for_each_el(auto func) const
   {
-    CHECK_DIM(other, derived());
-    ranges::for_each(views::iota(Index(0), derived().size()), [this, &other](Index i)
-    {
-      other[i] += derived()[i];
-    });
+    ranges::for_each(views::iota(Index(0), derived().size()), func);
   }
-  
-  template<typename Dest>
-  void subTo(Dest& other) const requires derived_from<Dest, MatrixBase<Dest, Scalar>>
-  {
-    CHECK_DIM(other, derived());
-    ranges::for_each(views::iota(Index(0), derived().size()), [this, &other](Index i)
-    {
-      other[i] -= derived()[i];
-    });
-  }
-
 public:
-  template<typename OtherDerived>
-    requires derived_from<OtherDerived, MatrixBase<OtherDerived, Scalar>>
-  Derived& operator=(const MatrixBase<OtherDerived, Scalar>& other)
+  void mulByScalar(Scalar scalar)
   {
-    other.derived().evalTo(derived());
-    return derived();
+    for_each_el([this, scalar](Index i) { derived()[i] *= scalar; });
   }
 
-  template<typename OtherDerived>
-    requires derived_from<OtherDerived, MatrixBase<OtherDerived, Scalar>>
-  Derived& operator+=(const MatrixBase<OtherDerived, Scalar>& other)
-  {
-    other.derived().addTo(derived());
-    return derived();
+#define DEFINE_FUNC_EVAL_ADD_SUB_TO(func, op) \
+  template<typename Dest>\
+    requires derived_from<Dest, MatrixBase<Dest, Scalar>>\
+  void func(Dest& other) const\
+  {\
+    CHECK_DIM(other, derived());\
+    for_each_el([this, &other](Index i)\
+    {\
+      other[i] op derived()[i];\
+    });\
   }
 
-  template<typename OtherDerived>
-    requires derived_from<OtherDerived, MatrixBase<OtherDerived, Scalar>>
-  Derived& operator-=(const MatrixBase<OtherDerived, Scalar>& other)
-  {
-    other.derived().subTo(derived());
-    return derived();
+  DEFINE_FUNC_EVAL_ADD_SUB_TO(evalTo, =)
+  DEFINE_FUNC_EVAL_ADD_SUB_TO(addTo, +=)
+  DEFINE_FUNC_EVAL_ADD_SUB_TO(subTo, -=)
+#undef DEFINE_FUNC_EVAL_ADD_SUB_TO
+
+#define DEFINE_ASSIGN_OPERATOR(op, func) \
+  template<typename OtherDerived>\
+    requires derived_from<OtherDerived, MatrixBase<OtherDerived, Scalar>>\
+  Derived& operator op(const MatrixBase<OtherDerived, Scalar>& other)\
+  {\
+    other.derived().func(derived());\
+    return derived();\
   }
 
+  DEFINE_ASSIGN_OPERATOR(=, evalTo)
+  DEFINE_ASSIGN_OPERATOR(+=, addTo)
+  DEFINE_ASSIGN_OPERATOR(-=, subTo)
+#undef DEFINE_ASSIGN_OPERATOR
 };
 
-template<typename Dest, typename Derived, typename Scalar>
-  requires derived_from<Dest, MatrixBase<Dest, Scalar>>
-Dest operator+(const Dest& lhs, const MatrixBase<Derived, Scalar>& rhs)
-{
-  Dest tmp = lhs;
-  rhs.derived().addTo(tmp);
-  return tmp;
+#define DEFINE_ADD_SUB_MUL_OPERATOR(op, func) \
+template<typename Dest, typename Derived, typename Scalar>\
+  requires derived_from<Derived, MatrixBase<Derived, Scalar>>\
+Dest operator op(const Dest& lhs, const MatrixBase<Derived, Scalar>& rhs)\
+{\
+  Dest tmp = lhs;\
+  rhs.derived().func(tmp);\
+  return tmp;\
 }
 
-template<typename Dest, typename Derived, typename Scalar>
-  requires derived_from<Dest, MatrixBase<Dest, Scalar>>
-Dest operator-(const Dest& lhs, const MatrixBase<Derived, Scalar>& rhs)
-{
-  Dest tmp = lhs;
-  rhs.derived().subTo(tmp);
-  return tmp;
-}
-
-template<typename Dest, typename Derived, typename Scalar>
-  requires derived_from<Dest, MatrixBase<Dest, Scalar>>
-Dest operator*(const Dest& lhs, const MatrixBase<Derived, Scalar>& rhs)
-{
-  Dest tmp = lhs;
-  rhs.derived().mulRightTo(tmp);
-  return tmp;
-}
+DEFINE_ADD_SUB_MUL_OPERATOR(+, addTo)
+DEFINE_ADD_SUB_MUL_OPERATOR(-, subTo)
+DEFINE_ADD_SUB_MUL_OPERATOR(*, mulRightTo)
 
 template<typename Derived, typename Scalar>
-  requires derived_from<Derived, MatrixBase<Derived, Scalar>>
+  requires derived_from<Derived, MatrixBase<Derived, Scalar>> && IsScalar<Scalar>
 Derived operator*(const Scalar& lhs, const MatrixBase<Derived, Scalar>& rhs)
 {
   Derived tmp = rhs.derived();
@@ -157,10 +142,10 @@ Derived operator*(const Scalar& lhs, const MatrixBase<Derived, Scalar>& rhs)
 }
 
 template<typename Derived, typename Scalar>
-  requires derived_from<Derived, MatrixBase<Derived, Scalar>>
+  requires derived_from<Derived, MatrixBase<Derived, Scalar>> && IsScalar<Scalar>
 Derived operator*(const MatrixBase<Derived, Scalar>& lhs, const Scalar& rhs)
 {
   return rhs * lhs;
 }
 
-} // end of namespace DistMat
+} // namespace DistMat
