@@ -35,6 +35,7 @@ int main(int argc, char const *argv[])
   A(0, 0) = 2;
 
   test_add_eq_mul(A, 10);
+  test_sub_eq_mul(A, 10);
   cout << A(0, 0) << endl;
   cout << A(0, 2) << endl;
   cout << "hello" << endl;

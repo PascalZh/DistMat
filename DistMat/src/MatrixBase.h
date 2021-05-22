@@ -29,18 +29,18 @@ Is_cols_Implemented<T> && Is_size_Implemented<T>;
 
 template<typename Derived, typename Scalar>
 concept IsMatrixBaseImplemented = requires (
-  Derived mat, const Derived cmat, Index row, Index col, Index i, Scalar scalar 
+  Derived mat, const Derived cMat, Index row, Index col, Index i, Scalar scalar 
   ) {
-  { cmat(row, col) }    -> same_as<const Scalar&>;
-  { cmat.at(row, col) } -> same_as<const Scalar&>;
-  { cmat[i] }           -> same_as<const Scalar&>;
+  { cMat(row, col) }    -> same_as<const Scalar&>;
+  { cMat.at(row, col) } -> same_as<const Scalar&>;
+  { cMat[i] }           -> same_as<const Scalar&>;
   { mat.mulByScalar(scalar) } -> same_as<void>;
   // test func with Derived, ensure func is implemented as a template
-  { cmat.template evalTo<Derived>(mat) }     -> same_as<void>;
-  { cmat.template addTo<Derived>(mat) }      -> same_as<void>;
-  { cmat.template subTo<Derived>(mat) }      -> same_as<void>;
-  { cmat.template mulLeftTo<Derived>(mat) }  -> same_as<void>;
-  { cmat.template mulRightTo<Derived>(mat) } -> same_as<void>;
+  { cMat.template evalTo<Derived>(mat) }     -> same_as<void>;
+  { cMat.template addTo<Derived>(mat) }      -> same_as<void>;
+  { cMat.template subTo<Derived>(mat) }      -> same_as<void>;
+  { cMat.template mulLeftTo<Derived>(mat) }  -> same_as<void>;
+  { cMat.template mulRightTo<Derived>(mat) } -> same_as<void>;
 } && IsAnyTwoOf_rows_cols_size_Implemented<Derived> && IsScalar<Scalar> && std::equality_comparable<Derived>;
 
 template<typename Derived, typename Scalar>
