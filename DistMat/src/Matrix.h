@@ -61,15 +61,6 @@ public:
     // TODO
   }
 
-  Scalar& mat(int i,int j){
-	  if (i > m_rows-1 || j > m_cols-1)
-    {
-      // TODO
-      throw;
-    }
-	return *m_plain_object[i*m_cols+j];
-  }
-
   template<typename Dest>
   void mulRightTo(Dest& other) const
   {
@@ -87,12 +78,12 @@ public:
 		  tmp[j]=0;
 		  for (int m = 0; m < this->cols(); m++)
 		  {
-			  tmp[j]+=this->mat(i,m)*other->mat(m,j);
+			  tmp[j]+=this->at(i,m)*other->at(m,j);
 		  }
       }
 	  for (int m = 0; m < this->cols(); m++)
 	  {
-			this->mat(i,m)=tmp[m];
+			this->at(i,m)=tmp[m];
 	  }
     }
   }
@@ -104,24 +95,10 @@ public:
       // TODO
       throw;
     }
-    int k = 0, l = 0;
-	vector<int> tmp[this->rows()];
-    for (int i = 0; i < this->rows(); i++)
-    {	
-      for (int j = 0; j < this->cols(); m++)
-      {
-		  tmp[j]=0;
-		  for (int m = 0; m < this->cols(); m++)
-		  {
-			  tmp[j]+=this->mat(i,m)*other->mat(m,j);
-		  }
-      }
-	  for (int m = 0; m < this->cols(); m++)
-	  {
-			this->mat(i,m)=tmp[m];
-	  }
-    }
+    Matrix A11,A12,A21,A22,B11,B12,B21,B22;
+
   }
+
 
   Index rows() const { return m_rows; }
   Index cols() const { return m_cols; }
