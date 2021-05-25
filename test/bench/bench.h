@@ -1,12 +1,10 @@
 #pragma once
 #include <string>
-#include <iostream>
 #include <chrono>
 #include <vector>
+#include <iostream>
 
-using std::string;
-using std::function;
-using std::vector;
+using std::string, std::to_string, std::vector, std::cout, std::endl, std::cin;
 namespace chrono = std::chrono;
 
 struct Bench;
@@ -34,9 +32,14 @@ struct Bench {
 };
 
 #define BENCH(name, iterations, desc, codes) \
-  allBenches.emplace_back(name, iterations, desc, #codes, BenchResult{});\
-  auto bench_start = chrono::steady_clock::now();\
-  codes\
-  allBenches.back().result.duration = chrono::steady_clock::now() - bench_start;\
-  std::cout << allBenches.back().result.duration.count() << "ms" << std::endl;
-  
+  {\
+    allBenches.emplace_back(name, iterations, desc, #codes, BenchResult{});\
+    auto bench_start = chrono::steady_clock::now();\
+    codes\
+    allBenches.back().result.duration = chrono::steady_clock::now() - bench_start;\
+    cout << bench::serialize(allBenches.back()) << endl;\
+  }
+
+namespace bench {
+  string serialize(const Bench& bench);
+} // namespace bench

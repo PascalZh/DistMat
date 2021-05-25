@@ -49,6 +49,10 @@
     "chrono": "cpp",
     "compare": "cpp",
     "ctime": "cpp",
-    "ratio": "cpp"
-  }
+    "ratio": "cpp",
+    "map": "cpp"
+  },
+  "cSpell.words": [
+    "TFUNCTION"
+  ]
 }

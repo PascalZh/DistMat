@@ -9,7 +9,7 @@ namespace DistMat
 {
 
 // Concepts
-// TODO ensure Derived implement standard(non-template) operator=
+// ensure Derived implement standard(non-template) operator=
 
 template<typename T>
 concept IsScalar = std::regular<T>;
@@ -71,19 +71,11 @@ public:
   Index cols() const { return derived().size() / derived().rows(); }
   Index size() const { return derived().rows() * derived().cols(); }
 
-private:
-  void for_each_el(auto func)
-  {
-    ranges::for_each(views::iota(Index(0), derived().size()), func);
-  }
-  void for_each_el(auto func) const
-  {
-    ranges::for_each(views::iota(Index(0), derived().size()), func);
-  }
 public:
-  void mulByScalar(Scalar scalar)
+  void mulByScalar(const Scalar& scalar)
   {
-    for_each_el([this, scalar](Index i) { derived()[i] *= scalar; });
+    ranges::for_each(views::iota(Index(0), derived().size()),
+      [this, scalar](Index i) { derived()[i] *= scalar; });
   }
 
 #define DEFINE_FUNC_EVAL_ADD_SUB_TO(func, op) \
@@ -92,7 +84,7 @@ public:
   void func(Dest& other) const\
   {\
     CHECK_DIM(other, derived());\
-    for_each_el([this, &other](Index i)\
+    ranges::for_each(views::iota(Index(0), derived().size()), [this, &other](Index i)\
     {\
       other[i] op derived()[i];\
     });\
@@ -115,6 +107,11 @@ public:
   DEFINE_ASSIGN_OPERATOR(=, evalTo)
   DEFINE_ASSIGN_OPERATOR(+=, addTo)
   DEFINE_ASSIGN_OPERATOR(-=, subTo)
+  Derived& operator/=(const Scalar& scalar)
+  {
+    derived().mulByScalar(1.0 / scalar);
+    return derived();
+  }
 #undef DEFINE_ASSIGN_OPERATOR
 };
 
@@ -132,8 +129,11 @@ DEFINE_ADD_SUB_MUL_OPERATOR(+, addTo)
 DEFINE_ADD_SUB_MUL_OPERATOR(-, subTo)
 DEFINE_ADD_SUB_MUL_OPERATOR(*, mulRightTo)
 
-template<typename Derived, typename Scalar>
-  requires derived_from<Derived, MatrixBase<Derived, Scalar>> && IsScalar<Scalar>
+#define DISTMAT_TFUNCTION \
+template<typename Derived, typename Scalar>\
+  requires derived_from<Derived, MatrixBase<Derived, Scalar>>
+
+DISTMAT_TFUNCTION
 Derived operator*(const Scalar& lhs, const MatrixBase<Derived, Scalar>& rhs)
 {
   Derived tmp = rhs.derived();
@@ -141,11 +141,30 @@ Derived operator*(const Scalar& lhs, const MatrixBase<Derived, Scalar>& rhs)
   return tmp;
 }
 
-template<typename Derived, typename Scalar>
-  requires derived_from<Derived, MatrixBase<Derived, Scalar>> && IsScalar<Scalar>
+DISTMAT_TFUNCTION
 Derived operator*(const MatrixBase<Derived, Scalar>& lhs, const Scalar& rhs)
 {
   return rhs * lhs;
+}
+
+DISTMAT_TFUNCTION
+Derived operator/(const MatrixBase<Derived, Scalar>& lhs, const Scalar& rhs)
+{
+  Derived tmp = lhs.derived();
+  tmp.mulByScalar(1.0 / rhs);
+  return tmp;
+}
+
+///\brief Unary operator - as in -A
+DISTMAT_TFUNCTION
+Derived operator-(const MatrixBase<Derived, Scalar>& mat)
+{
+  Derived tmp = mat.derived();
+  ranges::for_each(views::iota(Index(0), tmp.derived().size()), [&tmp](Index i)
+  {
+    tmp[i] = -tmp[i];
+  });
+  return tmp;
 }
 
 } // namespace DistMat
