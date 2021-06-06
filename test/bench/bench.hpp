@@ -4,11 +4,14 @@
 #include <vector>
 #include <iostream>
 
-using std::string, std::to_string, std::vector, std::cout, std::endl, std::cin;
+namespace bench
+{
+  
+using namespace std;
 namespace chrono = std::chrono;
 
 struct Bench;
-inline vector<Bench> allBenches;
+inline vector<Bench> allBenches; // NOLINT
 
 struct Environment {
   string os;
@@ -30,7 +33,7 @@ struct Bench {
 
   BenchResult result;
 };
-
+// NOLINTNEXTLINE
 #define BENCH(name, iterations, desc, codes) \
   {\
     allBenches.emplace_back(name, iterations, desc, #codes, BenchResult{});\
@@ -40,6 +43,6 @@ struct Bench {
     cout << bench::serialize(allBenches.back()) << endl;\
   }
 
-namespace bench {
-  string serialize(const Bench& bench);
+string serialize(const Bench& bench);
+
 } // namespace bench

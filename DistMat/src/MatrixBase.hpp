@@ -2,8 +2,8 @@
 #include <concepts>
 #include <ranges>
 #include <algorithm>
-#include "Error.h"
-#include "Type.h"
+#include "Error.hpp"
+#include "Type.hpp"
 
 namespace DistMat
 {
@@ -23,9 +23,9 @@ concept Is_size_Implemented = !same_as<decltype(&T::size), decltype(&T::Base::si
 
 template<typename T>
 concept IsAnyTwoOf_rows_cols_size_Implemented =
-Is_rows_Implemented<T> && Is_cols_Implemented<T> ||
-Is_rows_Implemented<T> && Is_size_Implemented<T> ||
-Is_cols_Implemented<T> && Is_size_Implemented<T>;
+(Is_rows_Implemented<T> && Is_cols_Implemented<T>) ||
+(Is_rows_Implemented<T> && Is_size_Implemented<T>) ||
+(Is_cols_Implemented<T> && Is_size_Implemented<T>);
 
 template<typename Derived, typename Scalar>
 concept IsMatrixBaseImplemented = requires (
@@ -78,6 +78,7 @@ public:
       [this, scalar](Index i) { derived()[i] *= scalar; });
   }
 
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define DEFINE_FUNC_EVAL_ADD_SUB_TO(func, op) \
   template<typename Dest>\
     requires derived_from<Dest, MatrixBase<Dest, Scalar>>\
@@ -95,6 +96,7 @@ public:
   DEFINE_FUNC_EVAL_ADD_SUB_TO(subTo, -=)
 #undef DEFINE_FUNC_EVAL_ADD_SUB_TO
 
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define DEFINE_ASSIGN_OPERATOR(op, func) \
   template<typename OtherDerived>\
     requires derived_from<OtherDerived, MatrixBase<OtherDerived, Scalar>>\
@@ -104,6 +106,7 @@ public:
     return derived();\
   }
 
+  // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)
   DEFINE_ASSIGN_OPERATOR(=, evalTo)
   DEFINE_ASSIGN_OPERATOR(+=, addTo)
   DEFINE_ASSIGN_OPERATOR(-=, subTo)
@@ -115,6 +118,7 @@ public:
 #undef DEFINE_ASSIGN_OPERATOR
 };
 
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define DEFINE_ADD_SUB_MUL_OPERATOR(op, func) \
 template<typename Dest, typename Derived, typename Scalar>\
   requires derived_from<Derived, MatrixBase<Derived, Scalar>>\
@@ -129,6 +133,7 @@ DEFINE_ADD_SUB_MUL_OPERATOR(+, addTo)
 DEFINE_ADD_SUB_MUL_OPERATOR(-, subTo)
 DEFINE_ADD_SUB_MUL_OPERATOR(*, mulRightTo)
 
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define DISTMAT_TFUNCTION \
 template<typename Derived, typename Scalar>\
   requires derived_from<Derived, MatrixBase<Derived, Scalar>>
@@ -155,7 +160,7 @@ Derived operator/(const MatrixBase<Derived, Scalar>& lhs, const Scalar& rhs)
   return tmp;
 }
 
-///\brief Unary operator - as in -A
+/// \brief Unary operator - as in -A
 DISTMAT_TFUNCTION
 Derived operator-(const MatrixBase<Derived, Scalar>& mat)
 {

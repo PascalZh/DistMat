@@ -1,0 +1,1 @@
+Checks: '-*,google-*,cppcoreguidelines-*,-cppcoreguidelines-pro-type-const-cast,-google-build-using-namespace'

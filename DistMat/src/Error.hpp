@@ -2,14 +2,16 @@
 #include <stdexcept>
 #include <string>
 #include <iostream>
-#include "Type.h"
+#include "Type.hpp"
 
 namespace DistMat
 {
 namespace error
 {
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define ERROR_WHERE() string("\n\t") + __FILE__ + ":" + to_string(__LINE__) + "\n\tFunction: " + __func__
 
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define CHECK_DIM(lhs, rhs) \
   if (lhs.rows() != rhs.rows() || lhs.cols() != rhs.cols()) {\
     throw std::runtime_error(ERROR_WHERE() + "\n\tError: " +\

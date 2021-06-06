@@ -1,18 +1,21 @@
 #include <iostream>
-#include "src/Matrix.h"
-#include "bench/bench.h"
+#include "src/Matrix.hpp"
+#include "bench/bench.hpp"
 using namespace DistMat;
+using namespace bench;
 
 template<typename Mat>
 void test_add_eq_mul(Mat& A, int cnt)
 {
   Mat B = A;
   BENCH("m:add_eq_mul", cnt, "A + A + ... + A is equivalent to n * A",
-    for (int i = 0; i < cnt; ++i)
+    for (int i = 0; i < cnt; ++i) {
       A = A + B;
+    }
   )
-  if (A != (cnt + 1) * B)
+  if (A != (cnt + 1) * B) {
     throw make_tuple(allBenches.back(), A, B);
+  }
 }
 
 template<typename Mat>
@@ -21,11 +24,13 @@ void test_sub_eq_mul(Mat& A, int cnt)
   Mat B = A;
   A = A * cnt;
   BENCH("m:sub_eq_mul", cnt, "substract A multiple times is equivalent to substract n * A",
-    for (int i = 0; i < cnt; ++i)
+    for (int i = 0; i < cnt; ++i) {
       A = A - B;
+    }
   )
-  if (A != Mat(A.rows(), A.cols())/*TODO this constructor should not be zero-initialized*/)
+  if (A != Mat(A.rows(), A.cols())/*TODO this constructor should not be zero-initialized*/) {
     throw make_tuple(allBenches.back(), A, B);
+  }
 }
 
 template<typename Mat>
@@ -72,8 +77,7 @@ int main(int argc, char const *argv[])
   cout << A.size() << endl;
   cout << A.rows() << endl;
   cout << B(0, 0) << endl;
-
-  B(1, 2) = 6;
+  B(1, 2) = 4;
   cout << B[5] << endl;
   return 0;
 }

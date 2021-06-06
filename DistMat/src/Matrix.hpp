@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "MatrixBase.h"
+#include "MatrixBase.hpp"
 
 namespace DistMat
 {
@@ -20,8 +20,9 @@ public:
   using Base::operator=;
   Matrix<Scalar>& operator=(const Matrix<Scalar>& other)
   {
-    if (this != &other)
+    if (this != &other) {
       other.evalTo(*this);
+    }
     return *this;
   }
 

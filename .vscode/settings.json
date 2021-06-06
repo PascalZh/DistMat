@@ -50,9 +50,13 @@
     "compare": "cpp",
     "ctime": "cpp",
     "ratio": "cpp",
-    "map": "cpp"
+    "map": "cpp",
+    "cstring": "cpp",
+    "cinttypes": "cpp"
   },
   "cSpell.words": [
+    "NOLINT",
+    "NOLINTNEXTLINE",
     "TFUNCTION"
   ]
 }
