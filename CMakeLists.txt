@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 # global settings
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_compile_options(-Wall -Werror)
 
@@ -10,7 +11,6 @@ set(TEST_MATRIX test_matrix.out)
 
 add_library(DistMat INTERFACE)
 target_include_directories(DistMat INTERFACE .)
-target_compile_features(DistMat INTERFACE cxx_std_20)
 
 add_library(bench STATIC test/bench/bench.cpp)
 target_link_libraries(bench PUBLIC DistMat)
