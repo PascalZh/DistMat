@@ -33,7 +33,7 @@ void multiplyMatrixRightToInplace(
     }
 }
 /// A = B * A
-/// \sa multiplyMatrixRightToInplace
+/// \see multiplyMatrixRightToInplace
 template<typename Index, typename Mat, typename Vec>
 void multiplyMatrixLeftToInplace(Mat& A, Mat& B, Index n, Vec& tmp, auto entryVec, auto entry)
 {

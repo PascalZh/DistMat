@@ -41,7 +41,8 @@ concept IsMatrixBaseImplemented = requires (
   { cMat.template subTo<Derived>(mat) }      -> same_as<void>;
   { cMat.template mulLeftTo<Derived>(mat) }  -> same_as<void>;
   { cMat.template mulRightTo<Derived>(mat) } -> same_as<void>;
-} && IsAnyTwoOf_rows_cols_size_Implemented<Derived> && IsScalar<Scalar> && std::equality_comparable<Derived>;
+} && IsAnyTwoOf_rows_cols_size_Implemented<Derived> && IsScalar<Scalar> &&
+std::equality_comparable<Derived>;
 
 template<typename Derived, typename Scalar>
 class MatrixBase {
@@ -61,6 +62,9 @@ public:
   {
     return const_cast<Scalar&>(const_derived().at(row, col));
   }
+
+  //> Access coefficients with just one index just like the matrix is spanned
+  // into a vector with row major.
   Scalar& operator[](Index i)
   {
     return const_cast<Scalar&>(const_derived()[i]);
@@ -80,9 +84,9 @@ public:
 
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define DEFINE_FUNC_EVAL_ADD_SUB_TO(func, op) \
-  template<typename Dest>\
-    requires derived_from<Dest, MatrixBase<Dest, Scalar>>\
-  void func(Dest& other) const\
+  template<typename OtherDerived>\
+    requires derived_from<OtherDerived, MatrixBase<OtherDerived, Scalar>>\
+  void func(OtherDerived& other) const\
   {\
     CHECK_DIM(other, derived());\
     ranges::for_each(views::iota(Index(0), derived().size()), [this, &other](Index i)\
@@ -99,7 +103,6 @@ public:
 // NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define DEFINE_ASSIGN_OPERATOR(op, func) \
   template<typename OtherDerived>\
-    requires derived_from<OtherDerived, MatrixBase<OtherDerived, Scalar>>\
   Derived& operator op(const MatrixBase<OtherDerived, Scalar>& other)\
   {\
     other.derived().func(derived());\
