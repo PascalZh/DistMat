@@ -15,6 +15,7 @@ public:
   using Base::const_derived;
 
   Matrix() = default;
+  ~Matrix() = default;
   Matrix(Matrix<Scalar>&& other) = default;
   Matrix<Scalar>& operator=(Matrix<Scalar>&& other) = default;
 
@@ -45,7 +46,7 @@ public:
   const Scalar& operator()(Index row, Index col) const
   {
     // use C order instead of Fortran order
-    return m_plain_object[row * this->rows() + col];
+    return m_plain_object[row * this->cols() + col];
   }
   const Scalar& at(Index row, Index col) const
   {
@@ -53,24 +54,11 @@ public:
     if (!(row < this->rows() && col < this->cols())) {
       throw std::range_error("bound check errors");
     }
-    return m_plain_object[row * this->rows() + col];
+    return m_plain_object[row * this->cols() + col];
   }
   const Scalar& operator[](Index i) const
   {
     return m_plain_object[i];
-  }
-
-  bool operator==(const Matrix<Scalar>& other) const
-  {
-    CHECK_DIM((*this), other);
-    bool isEqual = true;
-    for (Index i = 0; i < m_size; ++i) {
-      if (this->operator[](i) != other[i]) {
-        isEqual = false;
-        break;
-      }
-    }
-    return isEqual;
   }
 
   template<typename Dest>

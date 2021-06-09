@@ -1,12 +1,24 @@
 #pragma once
+#include "Error.hpp"
+#include "Type.hpp"
 #include <concepts>
 #include <ranges>
 #include <algorithm>
-#include "Error.hpp"
-#include "Type.hpp"
+#include <iostream>
 
 namespace DistMat
 {
+
+/// \brief Define template function.
+/// Note some arguments must be of the type `MatrixBase<Derived, Scalar>` to
+/// deduce template parameters.
+#define DISTMAT_TFUNCTION \
+template<typename Derived, typename Scalar>\
+  requires derived_from<Derived, MatrixBase<Derived, Scalar>>
+
+#define DISTMAT_MEM_TFUNCTION \
+template<typename OtherDerived>\
+  requires derived_from<OtherDerived, MatrixBase<OtherDerived, Scalar>>
 
 // Concepts
 // ensure Derived implement standard(non-template) operator=
@@ -34,13 +46,6 @@ concept IsMatrixBaseImplemented = requires (
   { cMat(row, col) }    -> same_as<const Scalar&>;
   { cMat.at(row, col) } -> same_as<const Scalar&>;
   { cMat[i] }           -> same_as<const Scalar&>;
-  { mat.mulByScalar(scalar) } -> same_as<void>;
-  // test func with Derived, ensure func is implemented as a template
-  { cMat.template evalTo<Derived>(mat) }     -> same_as<void>;
-  { cMat.template addTo<Derived>(mat) }      -> same_as<void>;
-  { cMat.template subTo<Derived>(mat) }      -> same_as<void>;
-  { cMat.template mulLeftTo<Derived>(mat) }  -> same_as<void>;
-  { cMat.template mulRightTo<Derived>(mat) } -> same_as<void>;
 } && IsAnyTwoOf_rows_cols_size_Implemented<Derived> && IsScalar<Scalar> &&
 std::equality_comparable<Derived>;
 
@@ -48,10 +53,10 @@ template<typename Derived, typename Scalar>
 class MatrixBase {
 public:
 
-  Derived&       derived() { return *static_cast<Derived*>(this); }
+  Derived&       derived()       { return *static_cast<Derived*>(this); }
   const Derived& derived() const { return *static_cast<const Derived*>(this); }
 
-  const Derived& const_derived(){ return const_cast<const Derived&>(derived()); }
+  const Derived& const_derived()       { return const_cast<const Derived&>(derived()); }
   const Derived& const_derived() const { return derived(); }
 
   Scalar& operator()(Index row, Index col)
@@ -81,48 +86,66 @@ public:
     ranges::for_each(views::iota(Index(0), derived().size()),
       [this, scalar](Index i) { derived()[i] *= scalar; });
   }
-
-// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
+  Derived transpose() const
+  {
+    Derived tmp(derived().cols(), derived().rows());
+    for (Index col = 0; col < derived().cols(); ++col) {
+      for (Index row = 0; row < derived().rows(); ++row) {
+        tmp(col, row) = derived()(row, col);
+      }
+    }
+    return tmp;
+  }
 #define DEFINE_FUNC_EVAL_ADD_SUB_TO(func, op) \
-  template<typename OtherDerived>\
-    requires derived_from<OtherDerived, MatrixBase<OtherDerived, Scalar>>\
+  DISTMAT_MEM_TFUNCTION\
   void func(OtherDerived& other) const\
   {\
     CHECK_DIM(other, derived());\
-    ranges::for_each(views::iota(Index(0), derived().size()), [this, &other](Index i)\
+    ranges::for_each(views::iota(Index(0), other.size()), [this, &other](Index i)\
     {\
       other[i] op derived()[i];\
     });\
   }
-
   DEFINE_FUNC_EVAL_ADD_SUB_TO(evalTo, =)
   DEFINE_FUNC_EVAL_ADD_SUB_TO(addTo, +=)
   DEFINE_FUNC_EVAL_ADD_SUB_TO(subTo, -=)
 #undef DEFINE_FUNC_EVAL_ADD_SUB_TO
 
-// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define DEFINE_ASSIGN_OPERATOR(op, func) \
-  template<typename OtherDerived>\
-  Derived& operator op(const MatrixBase<OtherDerived, Scalar>& other)\
+  DISTMAT_MEM_TFUNCTION\
+  Derived& operator op(const OtherDerived& other)\
   {\
-    other.derived().func(derived());\
+    other.func(derived());\
     return derived();\
   }
-
   // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)
   DEFINE_ASSIGN_OPERATOR(=, evalTo)
   DEFINE_ASSIGN_OPERATOR(+=, addTo)
   DEFINE_ASSIGN_OPERATOR(-=, subTo)
+#undef DEFINE_ASSIGN_OPERATOR
+
   Derived& operator/=(const Scalar& scalar)
   {
     derived().mulByScalar(1.0 / scalar);
     return derived();
   }
-#undef DEFINE_ASSIGN_OPERATOR
+
+  DISTMAT_MEM_TFUNCTION
+  bool operator==(const OtherDerived& other) const
+  {
+    CHECK_DIM(derived(), other);
+    bool isEqual = true;
+    for (Index i = 0; i < other.size(); ++i) {
+      if (derived()[i] != other[i]) {
+        isEqual = false;
+        break;
+      }
+    }
+    return isEqual;
+  }
 };
 
-// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
-#define DEFINE_ADD_SUB_MUL_OPERATOR(op, func) \
+#define DEFINE_BINARY_OPERATOR(op, func) \
 template<typename Dest, typename Derived, typename Scalar>\
   requires derived_from<Derived, MatrixBase<Derived, Scalar>>\
 Dest operator op(const Dest& lhs, const MatrixBase<Derived, Scalar>& rhs)\
@@ -131,15 +154,10 @@ Dest operator op(const Dest& lhs, const MatrixBase<Derived, Scalar>& rhs)\
   rhs.derived().func(tmp);\
   return tmp;\
 }
-
-DEFINE_ADD_SUB_MUL_OPERATOR(+, addTo)
-DEFINE_ADD_SUB_MUL_OPERATOR(-, subTo)
-DEFINE_ADD_SUB_MUL_OPERATOR(*, mulRightTo)
-
-// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
-#define DISTMAT_TFUNCTION \
-template<typename Derived, typename Scalar>\
-  requires derived_from<Derived, MatrixBase<Derived, Scalar>>
+DEFINE_BINARY_OPERATOR(+, addTo)
+DEFINE_BINARY_OPERATOR(-, subTo)
+DEFINE_BINARY_OPERATOR(*, mulRightTo)
+#undef DEFINE_BINARY_OPERATOR
 
 DISTMAT_TFUNCTION
 Derived operator*(const Scalar& lhs, const MatrixBase<Derived, Scalar>& rhs)
@@ -168,11 +186,23 @@ DISTMAT_TFUNCTION
 Derived operator-(const MatrixBase<Derived, Scalar>& mat)
 {
   Derived tmp = mat.derived();
-  ranges::for_each(views::iota(Index(0), tmp.derived().size()), [&tmp](Index i)
+  ranges::for_each(views::iota(Index(0), tmp.size()), [&tmp](Index i)
   {
     tmp[i] = -tmp[i];
   });
   return tmp;
+}
+
+DISTMAT_TFUNCTION
+std::ostream& operator<<(std::ostream& out, const MatrixBase<Derived, Scalar>& mat)
+{
+  for (Index col = 0; col < mat.derived().cols(); ++col) {
+    for (Index row = 0; row < mat.derived().rows(); ++row) {
+      out << mat.derived()(row, col) << " ";
+    }
+    out << endl;
+  }
+  return out;
 }
 
 } // namespace DistMat

@@ -1,14 +1,14 @@
 #include <iostream>
 #include "DistMat/src/Matrix.hpp"
-#include "bench/bench.hpp"
+#include "Bench.hpp"
 using namespace DistMat;
-using namespace bench;
+using namespace test;
 
 template<typename Mat>
 void test_add_eq_mul(Mat& A, int cnt)
 {
   Mat B = A;
-  BENCH("m:add_eq_mul", 1, "A + A + ... + A is equivalent to n * A",
+  BENCH("m:add_eq_mul", "A + A + ... + A is equivalent to n * A", 1,
     for (int i = 0; i < cnt; ++i) {
       A = A + B;
     }
@@ -23,7 +23,7 @@ void test_sub_eq_mul(Mat& A, int cnt)
 {
   Mat B = A;
   A = A * cnt;
-  BENCH("m:sub_eq_mul", 1, "substract A multiple times is equivalent to substract n * A",
+  BENCH("m:sub_eq_mul", "substract A multiple times is equivalent to substract n * A", 1,
     for (int i = 0; i < cnt; ++i) {
       A = A - B;
     }
@@ -40,12 +40,10 @@ void test_sub_eq_mul(Mat& A, int cnt)
 }
 
 template<typename Mat>
-void test_at_vs_operator_paren_speed(const Mat& A, int cnt)
+void test_at_vs_operator_paren(const Mat& A, int cnt)
 {
-  // TODO: figure out why vector is faster than raw array
   double sum = 0.0;
-  vector<typename Mat::scalar_type> B(A.size());
-  BENCH("m:element_access:at", cnt, "test how fast is A.at(i, j)",
+  BENCH("m:element_access:at", "test how fast is A.at(i, j)", cnt,
     for (int it = 0; it < cnt; ++it) { 
       for (Index i = 0; i < A.rows(); ++i) {
         for (Index j = 0; j < A.cols(); ++j) {
@@ -56,7 +54,7 @@ void test_at_vs_operator_paren_speed(const Mat& A, int cnt)
   )
 
   // sum must be used, otherwise the following codes will not compile
-  BENCH("m:element_access:operator()", cnt, "test how fast is A(i, j)",
+  BENCH("m:element_access:operator()", "test how fast is A(i, j)", cnt,
     for (int it = 0; it < cnt; ++it) { 
       for (Index i = 0; i < A.rows(); ++i) {
         for (Index j = 0; j < A.cols(); ++j) {
@@ -66,28 +64,32 @@ void test_at_vs_operator_paren_speed(const Mat& A, int cnt)
     }
   )
 
-  cout << "test_at_vs_operator_paren_speed: " << sum << endl;
+  cout << "test_at_vs_operator_paren: " << sum << endl;
 }
 
-void test_default_init()
+void test_default_init(int cnt)
 {
-  int cnt = 1000;
-  BENCH("m:default_init:constructor", cnt, "test if matrix is allocated but not initialized: use constructor Mat(Index rows, Index cols)",
+  int x = 0;
+  BENCH("m:default_init:constructor", "test if matrix is allocated but not initialized: use constructor Mat(Index rows, Index cols)", cnt,
     for (int i = 0; i < cnt; ++i) {
       Matrix<int> A(100, 100);
     }
   )
+  cout << "Matrix(row, col) constructor:" << x << endl;
 
-  BENCH("m:default_init:vector", cnt, "test if matrix is allocated but not initialized: use vector(size_t n)",
+  BENCH("m:default_init:vector", "test if matrix is allocated but not initialized: use vector(size_t n)", cnt,
     for (int i = 0; i < cnt; ++i) {
       vector<int> B(10000);
+      x = B[0];
     }
   )
-  constexpr size_t N = 3;
-  Matrix<int> C(N, N);
-  for (size_t i = 0; i < C.size(); ++i) {
-    cout << "C[i] = " << C[i] << " with i = " << i << endl;
+  if (x > 0) {
+    return;
   }
+}
+
+void test_unary_negate(int cnt)
+{
 }
 
 int main(int argc, char const *argv[])
@@ -103,11 +105,19 @@ int main(int argc, char const *argv[])
   A(0, 2) = 4;
   Matrix<int> B(3, 3);
   B = -A;
+  
+  Matrix<int> C(3, 4);
+  for (unsigned i = 0; i < C.rows(); ++i) {
+    for (unsigned j = 0; j < C.cols(); ++j) {
+      C(i, j) = j;
+    }
+  }
+  cout << C.transpose() << endl;
 
   test_add_eq_mul(A, 10);
   test_sub_eq_mul(A, 10);
-  test_at_vs_operator_paren_speed(B, 1000 * 1000);
-  test_default_init();
+  test_at_vs_operator_paren(B, 1000 * 1000);
+  test_default_init(1000);
   
   cout << A(0, 0) << endl;
   cout << A(0, 2) << endl;
