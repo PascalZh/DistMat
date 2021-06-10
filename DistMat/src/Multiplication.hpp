@@ -9,7 +9,8 @@ namespace multiplication {
 /// \param coeffVec use coeffVec(vec, i) to get the coefficient of a vector
 /// \param coeff    use coeff(A, i, j) to get the coefficient of a matrix
 template<typename _S, typename Index,
-  template <typename Scalar_> class Mat, template <typename Scalar_> class Vec>
+  template<typename Scalar_> class Mat,
+  template<typename Scalar_> class Vec>
 void multiplyMatrixRightToInplace(
   Mat<_S>& A, Mat<_S>& B, Index n, Vec<_S>& tmp,
   std::function<_S& (Vec<_S>&, Index)>
@@ -35,7 +36,8 @@ void multiplyMatrixRightToInplace(
 /// A = B * A
 /// \see multiplyMatrixRightToInplace
 template<typename _S, typename Index,
-  template <typename Scalar_> class Mat, template <typename Scalar_> class Vec>
+  template<typename Scalar_> class Mat,
+  template<typename Scalar_> class Vec>
 void multiplyMatrixLeftToInplace(
   Mat<_S>& A, Mat<_S>& B, Index n, Vec<_S>& tmp,
   std::function<_S& (Vec<_S>&, Index)>

@@ -1,6 +1,7 @@
 #pragma once
 #include "MatrixBase.hpp"
 #include "Util.hpp"
+
 #include "range.hpp"
 
 #include <vector>
@@ -12,7 +13,7 @@ namespace distmat
 using ::util::lang::range;
 using ::util::lang::indices;
 
-template <typename Scalar>
+template<typename Scalar>
 class Matrix : public MatrixBase<Matrix<Scalar>, Scalar> {
 public:
   using scalar_type = Scalar;
@@ -94,8 +95,10 @@ private:
 
 // postpone the concept here, because during the construction of the
 // MatrixBase, it doesn't know anything about Derived.
-template <typename Scalar>
+template<typename Scalar>
   requires IsMatrixBaseImplemented<Matrix<Scalar>, Scalar>
-using TEST_MATRIX_WITH_CONCEPT = Matrix<Scalar>;
+  using Test_Matrix_With_Concept_Impl = Matrix<Scalar>;
+
+using Test_Matrix_With_Concept_int = Test_Matrix_With_Concept_Impl<int>;
 
 } // end of namespace distmat

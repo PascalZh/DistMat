@@ -1,14 +1,16 @@
 #pragma once
 #include "Error.hpp"
 #include "Type.hpp"
+#include "Traits.hpp"
+
 #include "Multiplication.hpp"
+
 #include <concepts>
 #include <ranges>
 #include <algorithm>
 #include <iostream>
 
-namespace distmat
-{
+namespace distmat {
 
 /// \brief Define template function.
 /// Inject template parameters `Derived` and `Scalar`.
@@ -21,35 +23,6 @@ template<typename Derived, typename Scalar>\
 #define DISTMAT_MEM_TFUNCTION \
 template<typename OtherDerived>\
   requires derived_from<OtherDerived, MatrixBase<OtherDerived, Scalar>>
-
-// Concepts
-// ensure Derived implement standard(non-template) operator=
-
-template<typename T>
-concept IsScalar = std::regular<T>;
-
-template<typename T>
-concept Is_rows_Implemented = !same_as<decltype(&T::rows), decltype(&T::Base::rows)>;
-template<typename T>
-concept Is_cols_Implemented = !same_as<decltype(&T::cols), decltype(&T::Base::cols)>;
-template<typename T>
-concept Is_size_Implemented = !same_as<decltype(&T::size), decltype(&T::Base::size)>;
-
-template<typename T>
-concept IsAnyTwoOf_rows_cols_size_Implemented =
-(Is_rows_Implemented<T> && Is_cols_Implemented<T>) ||
-(Is_rows_Implemented<T> && Is_size_Implemented<T>) ||
-(Is_cols_Implemented<T> && Is_size_Implemented<T>);
-
-template<typename Derived, typename Scalar>
-concept IsMatrixBaseImplemented = requires (
-  Derived mat, const Derived cMat, Index row, Index col, Index i, Scalar scalar 
-  ) {
-  { cMat(row, col) }    -> same_as<const Scalar&>;
-  { cMat.at(row, col) } -> same_as<const Scalar&>;
-  { cMat[i] }           -> same_as<const Scalar&>;
-} && IsAnyTwoOf_rows_cols_size_Implemented<Derived> && IsScalar<Scalar> &&
-std::equality_comparable<Derived>;
 
 template<typename Derived, typename Scalar>
 class MatrixBase {
@@ -247,5 +220,33 @@ std::ostream& operator<<(std::ostream& out, const MatrixBase<Derived, Scalar>& m
   }
   return out;
 }
+
+// Concepts
+
+template<typename T>
+  concept IsScalar = std::regular<T>;
+
+template<typename T>
+  concept Is_rows_Implemented = !same_as<decltype(&T::rows), decltype(&T::Base::rows)>;
+template<typename T>
+  concept Is_cols_Implemented = !same_as<decltype(&T::cols), decltype(&T::Base::cols)>;
+template<typename T>
+  concept Is_size_Implemented = !same_as<decltype(&T::size), decltype(&T::Base::size)>;
+
+template<typename T>
+  concept IsAnyTwoOf_rows_cols_size_Implemented =
+  (Is_rows_Implemented<T> && Is_cols_Implemented<T>)
+  || (Is_rows_Implemented<T> && Is_size_Implemented<T>)
+  || (Is_cols_Implemented<T> && Is_size_Implemented<T>);
+
+template<typename Derived, typename Scalar>
+  concept IsMatrixBaseImplemented = derived_from<Derived, MatrixBase<Derived, Scalar>>
+  && requires (Derived mat, const Derived cMat,
+    Index row, Index col, Index i, Scalar scalar) {
+    { cMat(row, col) }    -> same_as<const Scalar&>;
+    { cMat.at(row, col) } -> same_as<const Scalar&>;
+    { cMat[i] }           -> same_as<const Scalar&>;
+  } && IsAnyTwoOf_rows_cols_size_Implemented<Derived>
+  && IsScalar<Scalar> && std::regular<Derived>;
 
 } // namespace distmat

@@ -98,6 +98,10 @@ int main(int argc, char const *argv[])
   cout << *p << endl; // NOLINT
   p = new int[10000000]; // NOLINT
   cout << p[10000000 - 2] << endl; // NOLINT
+  
+  cout << traits::scalar_traits<int>::identity << endl;
+  cout << traits::scalar_traits<float>::identity << endl;
+  cout << traits::scalar_traits<const int&>::identity << endl;
 
   Matrix<int> A(3, 3);
   A(0, 0) = 2;
