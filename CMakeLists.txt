@@ -12,7 +12,7 @@ set(BIN_TEST_MATRIX test_matrix.out)
 include(ExternalProject)
 ExternalProject_Add(
   range
-  PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty
+  PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/third_party
   GIT_REPOSITORY https://github.com/klmr/cpp11-range.git
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
