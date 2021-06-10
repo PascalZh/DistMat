@@ -1,7 +1,7 @@
 #include <iostream>
 #include "DistMat/src/Matrix.hpp"
 #include "Bench.hpp"
-using namespace DistMat;
+using namespace distmat;
 using namespace test;
 
 template<typename Mat>
@@ -103,22 +103,24 @@ int main(int argc, char const *argv[])
   A(0, 0) = 2;
   A(0, 1) = 3;
   A(0, 2) = 4;
+  A(1, 0) = 9;
+  A(2, 1) = 7;
   Matrix<int> B(3, 3);
   B = -A;
   
-  Matrix<int> C(3, 4);
-  for (unsigned i = 0; i < C.rows(); ++i) {
-    for (unsigned j = 0; j < C.cols(); ++j) {
-      C(i, j) = j;
-    }
-  }
+  Matrix<int> C(3, 3);
+  C(1 - 1, 2 - 1) = 1;
+  C(2 - 1, 3 - 1) = 1;
   cout << C.transpose() << endl;
+  cout << A << endl;
+  cout << C << endl;
+  cout << A * C << endl;
 
   test_add_eq_mul(A, 10);
   test_sub_eq_mul(A, 10);
   test_at_vs_operator_paren(B, 1000 * 1000);
   test_default_init(1000);
-  
+
   cout << A(0, 0) << endl;
   cout << A(0, 2) << endl;
   cout << "hello" << endl;

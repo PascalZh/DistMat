@@ -5,8 +5,9 @@
 #include <tuple>
 #include <iostream>
 #include <ranges>
+#include <cassert>
 
-namespace DistMat
+namespace distmat
 {
 using Index = size_t;
 using std::same_as, std::convertible_to, std::derived_from;
@@ -16,4 +17,4 @@ using std::cout, std::cin, std::endl;
 
 namespace ranges = std::ranges;
 namespace views = std::views;
-} // namespace DistMat
+} // namespace distmat

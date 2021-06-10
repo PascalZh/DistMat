@@ -35,4 +35,6 @@
 *.s
 
 # cmake
-/build
+/build/
+
+/.cache/

@@ -4,7 +4,7 @@
 #include <iostream>
 #include "Type.hpp"
 
-namespace DistMat
+namespace distmat
 {
 namespace error
 {
@@ -21,4 +21,4 @@ namespace error
   }
 
 } // namespace error
-} // namespace DistMat
+} // namespace distmat

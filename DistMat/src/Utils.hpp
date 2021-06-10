@@ -1,8 +1,9 @@
 #pragma once
+#include <vector>
 
-namespace DistMat
+namespace distmat
 {
-namespace Utils
+namespace utils
 {
 
 // Allocator adaptor that interposes construct() calls to
@@ -32,5 +33,5 @@ public:
   }
 };
 
-} // namespace Utils
-} // namespace DistMat
+} // namespace utils
+} // namespace distmat
