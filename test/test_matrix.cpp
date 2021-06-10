@@ -109,8 +109,11 @@ int main(int argc, char const *argv[])
   B = -A;
   
   Matrix<int> C(3, 3);
-  C(1 - 1, 2 - 1) = 1;
-  C(2 - 1, 3 - 1) = 1;
+  C = {
+    0, 1, 0,
+    0, 0, 1,
+    0, 0, 0,
+  };
   cout << C.transpose() << endl;
   cout << A << endl;
   cout << C << endl;

@@ -3,7 +3,7 @@
 
 namespace distmat
 {
-namespace utils
+namespace util
 {
 
 // Allocator adaptor that interposes construct() calls to
@@ -33,5 +33,5 @@ public:
   }
 };
 
-} // namespace utils
+} // namespace util
 } // namespace distmat

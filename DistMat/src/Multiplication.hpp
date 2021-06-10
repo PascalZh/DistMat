@@ -12,10 +12,10 @@ template<typename _S, typename Index,
   template <typename Scalar_> class Mat, template <typename Scalar_> class Vec>
 void multiplyMatrixRightToInplace(
   Mat<_S>& A, Mat<_S>& B, Index n, Vec<_S>& tmp,
-  std::function<_S& (Vec<_S>&, Index)> coeffVec =
-    [](Vec<_S>& v, Index i) -> _S& { return v[i]; },
-  std::function<_S& (Mat<_S>&, Index, Index)> coeff =
-    [](Mat<_S>& mat, Index row, Index col) -> _S& { return mat(row, col); })
+  std::function<_S& (Vec<_S>&, Index)>
+  coeffVec = [](Vec<_S>& v, Index i) -> _S& { return v[i]; },
+  std::function<_S& (Mat<_S>&, Index, Index)>
+  coeff = [](Mat<_S>& mat, Index row, Index col) -> _S& { return mat(row, col); })
 {
   for (Index i = 0; i < n; i++) {
     for (Index j = 0; j < n; j++) {
@@ -38,10 +38,10 @@ template<typename _S, typename Index,
   template <typename Scalar_> class Mat, template <typename Scalar_> class Vec>
 void multiplyMatrixLeftToInplace(
   Mat<_S>& A, Mat<_S>& B, Index n, Vec<_S>& tmp,
-  std::function<_S& (Vec<_S>&, Index)> coeffVec =
-    [](Vec<_S>& v, Index i) -> _S& { return v[i]; },
-  std::function<_S& (Mat<_S>&, Index, Index)> coeff =
-    [](Mat<_S>& mat, Index row, Index col) -> _S& { return mat(row, col); })
+  std::function<_S& (Vec<_S>&, Index)>
+  coeffVec = [](Vec<_S>& v, Index i) -> _S& { return v[i]; },
+  std::function<_S& (Mat<_S>&, Index, Index)>
+  coeff = [](Mat<_S>& mat, Index row, Index col) -> _S& { return mat(row, col); })
 {
   for (Index j = 0; j < n; j++) {
     for (Index i = 0; i < n; i++) {
