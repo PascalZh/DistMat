@@ -78,7 +78,7 @@ public:
   {
     assert(dst.rows() == derived().rows());
     Derived tmp(dst.rows(), 1);
-    multiplication::multiplyMatrixLeftToInplace(dst, const_cast<Derived&>(derived()), dst.rows(), tmp);
+    multiplication::multiplyMatrixLeftToInplace<Scalar>(dst, const_cast<Derived&>(derived()), dst.rows(), tmp);
   }
 
   /// Multiply two square matrices and assign to the `dst`.
@@ -88,7 +88,7 @@ public:
   {
     assert(dst.rows() == derived().rows());
     Derived tmp(dst.rows(), 1);
-    multiplication::multiplyMatrixRightToInplace(dst, const_cast<Derived&>(derived()), dst.rows(), tmp);
+    multiplication::multiplyMatrixRightToInplace<Scalar>(dst, const_cast<Derived&>(derived()), dst.rows(), tmp);
   }
 
 #define DEFINE_FUNC_EVAL_ADD_SUB_TO(func, op) \

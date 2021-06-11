@@ -8,15 +8,13 @@ namespace multiplication {
 /// \param tmp      a zero n-dimension vector for temporal storage of middle results
 /// \param coeffVec use coeffVec(vec, i) to get the coefficient of a vector
 /// \param coeff    use coeff(A, i, j) to get the coefficient of a matrix
-template<typename _S, typename Index,
-  template<typename Scalar_> class Mat,
-  template<typename Scalar_> class Vec>
+template<class Scalar, class Index, class Mat, class Vec>
 void multiplyMatrixRightToInplace(
-  Mat<_S>& A, Mat<_S>& B, Index n, Vec<_S>& tmp,
-  std::function<_S& (Vec<_S>&, Index)>
-  coeffVec = [](Vec<_S>& v, Index i) -> _S& { return v[i]; },
-  std::function<_S& (Mat<_S>&, Index, Index)>
-  coeff = [](Mat<_S>& mat, Index row, Index col) -> _S& { return mat(row, col); })
+  Mat& A, Mat& B, Index n, Vec& tmp,
+  std::function<Scalar& (Vec&, Index)>
+  coeffVec = [](Vec& v, Index i) -> Scalar& { return v[i]; },
+  std::function<Scalar& (Mat&, Index, Index)>
+  coeff = [](Mat& mat, Index row, Index col) -> Scalar& { return mat(row, col); })
 {
   for (Index i = 0; i < n; i++) {
     for (Index j = 0; j < n; j++) {
@@ -35,15 +33,13 @@ void multiplyMatrixRightToInplace(
 
 /// A = B * A
 /// \see multiplyMatrixRightToInplace
-template<typename _S, typename Index,
-  template<typename Scalar_> class Mat,
-  template<typename Scalar_> class Vec>
+template<class Scalar, class Index, class Mat, class Vec>
 void multiplyMatrixLeftToInplace(
-  Mat<_S>& A, Mat<_S>& B, Index n, Vec<_S>& tmp,
-  std::function<_S& (Vec<_S>&, Index)>
-  coeffVec = [](Vec<_S>& v, Index i) -> _S& { return v[i]; },
-  std::function<_S& (Mat<_S>&, Index, Index)>
-  coeff = [](Mat<_S>& mat, Index row, Index col) -> _S& { return mat(row, col); })
+  Mat& A, Mat& B, Index n, Vec& tmp,
+  std::function<Scalar& (Vec&, Index)>
+  coeffVec = [](Vec& v, Index i) -> Scalar& { return v[i]; },
+  std::function<Scalar& (Mat&, Index, Index)>
+  coeff = [](Mat& mat, Index row, Index col) -> Scalar& { return mat(row, col); })
 {
   for (Index j = 0; j < n; j++) {
     for (Index i = 0; i < n; i++) {

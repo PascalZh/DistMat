@@ -13,16 +13,16 @@ namespace distmat
 using ::util::lang::range;
 using ::util::lang::indices;
 
-template<typename Scalar>
-class Matrix : public MatrixBase<Matrix<Scalar>, Scalar> {
+template<IsScalar Scalar, template<typename T> typename InternalStorage>
+class Matrix : public MatrixBase<Matrix<Scalar, InternalStorage>, Scalar> {
 public:
   using scalar_type = Scalar;
-  using Base = MatrixBase<Matrix<Scalar>, Scalar>;
+  using Base = MatrixBase<Matrix, Scalar>;
   using Base::const_derived;
 
   Matrix() = default;
-  Matrix(Matrix<Scalar>&& other) = default;
-  Matrix(const Matrix<Scalar>& other)
+  Matrix(Matrix&& other) = default;
+  Matrix(const Matrix& other)
     : m_plain_object(other.rows() * other.cols())
     , m_rows(other.rows()), m_cols(other.cols())
   {
@@ -37,8 +37,8 @@ public:
   ~Matrix() = default;
 
   using Base::operator=;
-  Matrix<Scalar>& operator=(Matrix<Scalar>&& other) = default;
-  Matrix<Scalar>& operator=(const Matrix<Scalar>& other)
+  Matrix& operator=(Matrix&& other) = default;
+  Matrix& operator=(const Matrix& other)
   {
     if (this != &other) {
       other.evalTo(*this);
@@ -52,7 +52,7 @@ public:
   /// 4 5 6
   /// 7 8 9
   /// The list must have the same size as the matrix.
-  Matrix<Scalar>& operator=(std::initializer_list<Scalar> l)
+  Matrix& operator=(std::initializer_list<Scalar> l)
   {
     assert(l.size() == m_plain_object.size());
     auto it = m_plain_object.begin();
@@ -88,18 +88,25 @@ public:
   Index cols() const { return m_cols; }
   Index size() const { return m_plain_object.size(); }
 private:
-  std::vector<Scalar, util::default_init_allocator<Scalar>> m_plain_object;
+  InternalStorage<Scalar> m_plain_object;
   Index m_rows = 0;
   Index m_cols = 0;
 };
 
-// postpone the concept here, because during the construction of the
-// MatrixBase, it doesn't know anything about Derived.
-template<typename Scalar>
-  requires IsMatrixBaseImplemented<Matrix<Scalar>, Scalar>
-  class Test_Matrix_With_Concept {};
-// explicit initialization
-template class Test_Matrix_With_Concept<int>;
-template class Test_Matrix_With_Concept<double>;
+namespace detail {
+
+  template<typename Scalar>
+    using default_init_vector = std::vector<Scalar, util::default_init_allocator<Scalar>>;
+
+  // postpone the concept here, because during the construction of the
+  // MatrixBase, it doesn't know anything about Derived.
+  template<typename Scalar>
+    requires IsMatrixBaseImplemented<Matrix<Scalar, detail::default_init_vector>, Scalar>
+    class Test_Matrix_With_Concept {};
+  // explicit instantiation, only test some type
+  template class Test_Matrix_With_Concept<int>;
+  template class Test_Matrix_With_Concept<double>;
+
+} // namespace detail
 
 } // end of namespace distmat

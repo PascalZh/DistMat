@@ -4,6 +4,9 @@
 using namespace distmat;
 using namespace test;
 
+template<typename T>
+  using MatrixXd = Matrix<T, detail::default_init_vector>;
+
 template<typename Mat>
 void test_add_eq_mul(Mat& A, int cnt)
 {
@@ -72,7 +75,7 @@ void test_default_init(int cnt)
   int x = 0;
   BENCH("m:default_init:constructor", "test if matrix is allocated but not initialized: use constructor Mat(Index rows, Index cols)", cnt,
     for (int i = 0; i < cnt; ++i) {
-      Matrix<int> A(100, 100);
+      MatrixXd<int> A(100, 100);
     }
   )
   cout << "Matrix(row, col) constructor:" << x << endl;
@@ -103,16 +106,16 @@ int main(int argc, char const *argv[])
   cout << traits::scalar_traits<float>::one << endl;
   cout << traits::scalar_traits<const int&>::one << endl;
 
-  Matrix<int> A(3, 3);
+  MatrixXd<int> A(3, 3);
   A(0, 0) = 2;
   A(0, 1) = 3;
   A(0, 2) = 4;
   A(1, 0) = 9;
   A(2, 1) = 7;
-  Matrix<int> B(3, 3);
+  MatrixXd<int> B(3, 3);
   B = -A;
   
-  Matrix<int> C(3, 3);
+  MatrixXd<int> C(3, 3);
   C = {
     0, 1, 0,
     0, 0, 1,
@@ -137,7 +140,7 @@ int main(int argc, char const *argv[])
   B(1, 2) = 4;
   cout << B[5] << endl;
 
-  auto D = Matrix<double>::eye(3, 5);
+  auto D = MatrixXd<double>::eye(3, 5);
   cout << "eye:\n" << D << endl;
   cout << D * 3.0 << endl;
   return 0;
