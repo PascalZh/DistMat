@@ -13,7 +13,8 @@ template<typename Scalar>
 template<typename Scalar>
   requires std::is_arithmetic_v<std::remove_cvref_t<Scalar>>
   struct scalar_traits<Scalar> {
-    static constexpr std::remove_cvref_t<Scalar> identity = 0;
+    static constexpr std::remove_cvref_t<Scalar> zero = 0;
+    static constexpr std::remove_cvref_t<Scalar> one = 1;
   };
 
 } // namespace traits

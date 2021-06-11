@@ -97,8 +97,9 @@ private:
 // MatrixBase, it doesn't know anything about Derived.
 template<typename Scalar>
   requires IsMatrixBaseImplemented<Matrix<Scalar>, Scalar>
-  using Test_Matrix_With_Concept_Impl = Matrix<Scalar>;
-
-using Test_Matrix_With_Concept_int = Test_Matrix_With_Concept_Impl<int>;
+  class Test_Matrix_With_Concept {};
+// explicit initialization
+template class Test_Matrix_With_Concept<int>;
+template class Test_Matrix_With_Concept<double>;
 
 } // end of namespace distmat

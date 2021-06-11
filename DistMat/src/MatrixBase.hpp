@@ -13,12 +13,17 @@
 namespace distmat {
 
 /// \brief Define template function.
-/// Inject template parameters `Derived` and `Scalar`.
-/// Note some arguments must be of the type `MatrixBase<Derived, Scalar>` to
+/// Inject template parameters `_Derived` and `_Scalar`.
+/// Note some arguments must be of the type `MatrixBase<_Derived, _Scalar>` to
 /// deduce template parameters.
 #define DISTMAT_TFUNCTION \
-template<typename Derived, typename Scalar>\
-  requires derived_from<Derived, MatrixBase<Derived, Scalar>>
+template<typename _Derived, typename _Scalar>\
+  requires derived_from<_Derived, MatrixBase<_Derived, _Scalar>>
+
+#define DISTMAT_BINARY_TFUNCTION \
+template<typename _LDerived, typename _RDerived, typename _Scalar>\
+  requires derived_from<_LDerived, MatrixBase<_LDerived, _Scalar>> &&\
+    derived_from<_RDerived, MatrixBase<_RDerived, _Scalar>>
 
 #define DISTMAT_MEM_TFUNCTION \
 template<typename OtherDerived>\
@@ -27,7 +32,6 @@ template<typename OtherDerived>\
 template<typename Derived, typename Scalar>
 class MatrixBase {
 public:
-
   Derived&       derived()       { return *static_cast<Derived*>(this); }
   const Derived& derived() const { return *static_cast<const Derived*>(this); }
 
@@ -55,24 +59,17 @@ public:
   Index cols() const { return derived().size() / derived().rows(); }
   Index size() const { return derived().rows() * derived().cols(); }
 
-public:
+  bool isSquare() const { return derived().rows() == derived().cols(); }
 
-  void mulByScalar(const Scalar& scalar)
-  {
-    ranges::for_each(views::iota(Index(0), derived().size()),
-      [this, scalar](Index i) { derived()[i] *= scalar; });
-  }
+  Derived transpose() const;
 
-  Derived transpose() const
-  {
-    Derived tmp(derived().cols(), derived().rows());
-    for (Index col = 0; col < derived().cols(); ++col) {
-      for (Index row = 0; row < derived().rows(); ++row) {
-        tmp(col, row) = derived()(row, col);
-      }
-    }
-    return tmp;
-  }
+  static Derived eye(Index row, Index col);
+  static Derived zeros(Index row, Index col) { return fill(row, col, traits::scalar_traits<Scalar>::zero); }
+  static Derived ones(Index row, Index col) { return fill(row, col, traits::scalar_traits<Scalar>::one); }
+  static Derived fill(Index row, Index col, Scalar fillValue);
+
+// ********************** implimentations of arithematics **************************
+  void mulByScalar(const Scalar& scalar);
 
   /// Multiply two square matrices and assign to the `dst`.
   /// `dst = (*this) * dst`
@@ -109,6 +106,8 @@ public:
   DEFINE_FUNC_EVAL_ADD_SUB_TO(subTo, -=)
 #undef DEFINE_FUNC_EVAL_ADD_SUB_TO
 
+// *********************** Operators ***********************
+
 #define DEFINE_ASSIGN_OPERATOR(op, func) \
   DISTMAT_MEM_TFUNCTION\
   Derived& operator op(const OtherDerived& other)\
@@ -124,7 +123,7 @@ public:
 
   Derived& operator/=(const Scalar& scalar)
   {
-    derived().mulByScalar(1.0 / scalar);
+    derived().mulByScalar(traits::scalar_traits<Scalar>::one / scalar);
     return derived();
   }
 
@@ -141,67 +140,106 @@ public:
     return isEqual;
   }
 
-  bool isSquare() const { return derived().rows() == derived().cols(); }
 }; // class MatrixBase
 
-#define DEFINE_BINARY_OPERATOR(op, func) \
-template<typename OtherDerived, typename Derived, typename Scalar>\
-  requires derived_from<Derived, MatrixBase<Derived, Scalar>> &&\
-    derived_from<OtherDerived, MatrixBase<OtherDerived, Scalar>>\
-OtherDerived operator op(const OtherDerived& lhs, const MatrixBase<Derived, Scalar>& rhs)\
-{\
-  OtherDerived tmp = lhs;\
-  rhs.derived().func(tmp);\
-  return tmp;\
+template<typename Derived, typename Scalar>
+  Derived MatrixBase<Derived, Scalar>::transpose() const
+  {
+    Derived tmp(derived().cols(), derived().rows());
+    for (Index col = 0; col < derived().cols(); ++col) {
+      for (Index row = 0; row < derived().rows(); ++row) {
+        tmp(col, row) = derived()(row, col);
+      }
+    }
+    return tmp;
+  }
+
+template<typename Derived, typename Scalar>
+  void MatrixBase<Derived, Scalar>::mulByScalar(const Scalar& scalar)
+  {
+    ranges::for_each(views::iota(Index(0), derived().size()),
+      [this, scalar](Index i) { derived()[i] *= scalar; });
+  }
+
+template<typename Derived, typename Scalar>
+  Derived MatrixBase<Derived, Scalar>::eye(Index row, Index col)
+  {
+    Derived ret = Derived::zeros(row, col);
+    for (Index i = 0; i < std::min(row, col); ++i) {
+      ret(i, i) = 1;
+    }
+    return ret;
+  }
+
+template<typename Derived, typename Scalar>
+  Derived MatrixBase<Derived, Scalar>::fill(Index row, Index col, Scalar fillValue)
+  {
+    Derived ret(row, col);
+    for (Index i = 0; i < ret.size(); ++i) {
+      ret[i] = fillValue;
+    }
+    return ret;
+  }
+
+// ************************* Operators ****************************
+DISTMAT_BINARY_TFUNCTION
+_LDerived operator+(const _LDerived& lhs, const MatrixBase<_RDerived, _Scalar>& rhs)\
+{
+  _LDerived tmp = lhs;
+  rhs.derived().addTo(tmp);
+  return tmp;
 }
-DEFINE_BINARY_OPERATOR(+, addTo)
-DEFINE_BINARY_OPERATOR(-, subTo)
-template<typename OtherDerived, typename Derived, typename Scalar>
-  requires derived_from<Derived, MatrixBase<Derived, Scalar>> &&
-    derived_from<OtherDerived, MatrixBase<OtherDerived, Scalar>>
-OtherDerived operator*(const OtherDerived& lhs, const MatrixBase<Derived, Scalar>& rhs)
+
+DISTMAT_BINARY_TFUNCTION
+_LDerived operator-(const _LDerived& lhs, const MatrixBase<_RDerived, _Scalar>& rhs)\
+{
+  _LDerived tmp = lhs;
+  rhs.derived().subTo(tmp);
+  return tmp;
+}
+
+DISTMAT_BINARY_TFUNCTION
+_LDerived operator*(const _LDerived& lhs, const MatrixBase<_RDerived, _Scalar>& rhs)
 {
   // TODO check dimension
   if (lhs.isSquare() && rhs.derived().isSquare()) {
-    OtherDerived tmp = rhs.derived();
+    _LDerived tmp = rhs.derived();
     lhs.mulLeftTo(tmp);
     return tmp;
   } else {
     // Non-square matrix multiplication
     // TODO
-    OtherDerived ret;
-    return ret;
+    _LDerived tmp;
+    return tmp;
   }
 }
-#undef DEFINE_BINARY_OPERATOR
 
 DISTMAT_TFUNCTION
-Derived operator*(const Scalar& lhs, const MatrixBase<Derived, Scalar>& rhs)
+_Derived operator*(const _Scalar& lhs, const MatrixBase<_Derived, _Scalar>& rhs)
 {
-  Derived tmp = rhs.derived();
+  _Derived tmp = rhs.derived();
   tmp.mulByScalar(lhs);
   return tmp;
 }
 
 DISTMAT_TFUNCTION
-Derived operator*(const MatrixBase<Derived, Scalar>& lhs, const Scalar& rhs)
+_Derived operator*(const MatrixBase<_Derived, _Scalar>& lhs, const _Scalar& rhs)
 {
   return rhs * lhs;
 }
 
 DISTMAT_TFUNCTION
-Derived operator/(const MatrixBase<Derived, Scalar>& lhs, const Scalar& rhs)
+_Derived operator/(const MatrixBase<_Derived, _Scalar>& lhs, const _Scalar& rhs)
 {
-  Derived tmp = lhs.derived();
-  tmp.mulByScalar(1.0 / rhs);
-  return tmp;
+  _Derived tmp = lhs.derived();
+  return tmp * (traits::scalar_traits<_Scalar>::one / rhs);
 }
 
 /// \brief Unary operator - as in -A
 DISTMAT_TFUNCTION
-Derived operator-(const MatrixBase<Derived, Scalar>& mat)
+_Derived operator-(const MatrixBase<_Derived, _Scalar>& mat)
 {
-  Derived tmp = mat.derived();
+  _Derived tmp = mat.derived();
   ranges::for_each(views::iota(Index(0), tmp.size()), [&tmp](Index i)
   {
     tmp[i] = -tmp[i];
@@ -210,7 +248,7 @@ Derived operator-(const MatrixBase<Derived, Scalar>& mat)
 }
 
 DISTMAT_TFUNCTION
-std::ostream& operator<<(std::ostream& out, const MatrixBase<Derived, Scalar>& mat)
+std::ostream& operator<<(std::ostream& out, const MatrixBase<_Derived, _Scalar>& mat)
 {
   for (Index row = 0; row < mat.derived().rows(); ++row) {
     for (Index col = 0; col < mat.derived().cols(); ++col) {

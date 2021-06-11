@@ -99,9 +99,9 @@ int main(int argc, char const *argv[])
   p = new int[10000000]; // NOLINT
   cout << p[10000000 - 2] << endl; // NOLINT
   
-  cout << traits::scalar_traits<int>::identity << endl;
-  cout << traits::scalar_traits<float>::identity << endl;
-  cout << traits::scalar_traits<const int&>::identity << endl;
+  cout << traits::scalar_traits<int>::one << endl;
+  cout << traits::scalar_traits<float>::one << endl;
+  cout << traits::scalar_traits<const int&>::one << endl;
 
   Matrix<int> A(3, 3);
   A(0, 0) = 2;
@@ -136,5 +136,9 @@ int main(int argc, char const *argv[])
   cout << B(0, 0) << endl;
   B(1, 2) = 4;
   cout << B[5] << endl;
+
+  auto D = Matrix<double>::eye(3, 5);
+  cout << "eye:\n" << D << endl;
+  cout << D * 3.0 << endl;
   return 0;
 }
