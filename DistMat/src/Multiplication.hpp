@@ -1,59 +1,68 @@
 #pragma once
 #include <functional>
 
-namespace multiplication {
+namespace mul {
 
 /// A = A * B
-/// \param n        A and B are both nxn matrices
-/// \param tmp      a zero n-dimension vector for temporal storage of middle results
-/// \param coeffVec use coeffVec(vec, i) to get the coefficient of a vector
-/// \param coeff    use coeff(A, i, j) to get the coefficient of a matrix
-template<class Scalar, class Index, class Mat, class Vec>
-void multiplyMatrixRightToInplace(
-  Mat& A, Mat& B, Index n, Vec& tmp,
-  std::function<Scalar& (Vec&, Index)>
-  coeffVec = [](Vec& v, Index i) -> Scalar& { return v[i]; },
-  std::function<Scalar& (Mat&, Index, Index)>
-  coeff = [](Mat& mat, Index row, Index col) -> Scalar& { return mat(row, col); })
+/// A and B are both nxn matrices
+/// \param tmp      a n-dimension vector for temporal storage of middle results, must be zero before calling
+template<typename Index>
+void multiplyMatrixRightToInplace(auto& A, auto& B, auto& tmp)
 {
+  const Index n = A.rows();
   for (Index i = 0; i < n; i++) {
-    for (Index j = 0; j < n; j++) {
-      coeffVec(tmp, j) = 0;
+    for (Index j = 0; j < n; j++) { // initialize temporal vector
+      tmp[j] = 0;
     }
-    for (Index j = 0; j < n; j++) {
+    for (Index j = 0; j < n; j++) { // evaluate some line, and save to vector
       for (Index m = 0; m < n; m++) {
-        coeffVec(tmp, j) += coeff(A, i, m) * coeff(B, m, j);
+        tmp[j] += A(i, m) * B(m, j);
       }
     }
-    for (Index j = 0; j < n; j++) {
-      coeff(A, i, j) = coeffVec(tmp, j);
+    for (Index j = 0; j < n; j++) { // assign the vector to the matrix
+      A(i, j) = tmp[j];
     }
   }
 }
 
 /// A = B * A
 /// \see multiplyMatrixRightToInplace
-template<class Scalar, class Index, class Mat, class Vec>
-void multiplyMatrixLeftToInplace(
-  Mat& A, Mat& B, Index n, Vec& tmp,
-  std::function<Scalar& (Vec&, Index)>
-  coeffVec = [](Vec& v, Index i) -> Scalar& { return v[i]; },
-  std::function<Scalar& (Mat&, Index, Index)>
-  coeff = [](Mat& mat, Index row, Index col) -> Scalar& { return mat(row, col); })
+template<typename Index>
+void multiplyMatrixLeftToInplace(auto& A, auto& B, auto& tmp)
 {
+  const Index n = A.rows();
   for (Index j = 0; j < n; j++) {
     for (Index i = 0; i < n; i++) {
-      coeffVec(tmp, i) = 0;
+      tmp[i] = 0;
     }
     for (Index i = 0; i < n; i++) {
       for (Index m = 0; m < n; m++) {
-        coeffVec(tmp, i) += coeff(B, i, m) * coeff(A, m, j);
+        tmp[i] += B(i, m) * A(m, j);
       }
     }
     for (Index i = 0; i < n; i++) {
-      coeff(A, i, j) = coeffVec(tmp, i);
+      A(i, j) = tmp[i];
     }
   }
 }
 
-} // namespace multiplication
+/// C = A * B
+/// \param A nxm matrix
+/// \param B mxs matrix
+/// \param C nxs matrix
+template<class Index>
+void multiplyMatrix(auto& A, auto& B, auto& C)
+{
+  const Index n = A.rows();
+  const Index m = A.cols();
+  const Index s = B.cols();
+  for (Index i = 0; i < n; ++i) {
+    for (Index j = 0; j < s; ++j) {
+      for (Index k = 0; k < m; ++k) {
+        C(i, j) += A(i, k) * B(k, j);
+      }
+    }
+  }
+}
+
+} // namespace mul

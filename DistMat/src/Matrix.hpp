@@ -13,6 +13,13 @@ namespace distmat
 using ::util::lang::range;
 using ::util::lang::indices;
 
+template<typename Scalar>
+  using default_init_vector = std::vector<Scalar, util::default_init_allocator<Scalar>>;
+
+template<IsScalar Scalar,
+  template<typename T> typename InternalStorage = default_init_vector>
+class Matrix;
+
 template<IsScalar Scalar, template<typename T> typename InternalStorage>
 class Matrix : public MatrixBase<Matrix<Scalar, InternalStorage>, Scalar> {
 public:
@@ -23,7 +30,7 @@ public:
   Matrix() = default;
   Matrix(Matrix&& other) = default;
   Matrix(const Matrix& other)
-    : m_plain_object(other.rows() * other.cols())
+    : m_storage(other.rows() * other.cols())
     , m_rows(other.rows()), m_cols(other.cols())
   {
     other.evalTo(*this);
@@ -32,7 +39,7 @@ public:
   // `vector(size_t n)` will default-insert the elements, thus value-initialize the elements.
   // So we replace the default allocator with the Utils::default_init_allocator
   Matrix(Index rows, Index cols)
-    : m_plain_object(rows * cols), m_rows(rows), m_cols(cols) {}
+    : m_storage(rows * cols), m_rows(rows), m_cols(cols) {}
     
   ~Matrix() = default;
 
@@ -54,8 +61,8 @@ public:
   /// The list must have the same size as the matrix.
   Matrix& operator=(std::initializer_list<Scalar> l)
   {
-    assert(l.size() == m_plain_object.size());
-    auto it = m_plain_object.begin();
+    assert(l.size() == m_storage.size());
+    auto it = m_storage.begin();
     for (auto x : l) {
       *it = x;
       ++it;
@@ -69,7 +76,7 @@ public:
   const Scalar& operator()(Index row, Index col) const
   {
     // use C order instead of Fortran order
-    return m_plain_object[row * this->cols() + col];
+    return m_storage[row * this->cols() + col];
   }
   const Scalar& at(Index row, Index col) const
   {
@@ -77,31 +84,28 @@ public:
     if (!(row < this->rows() && col < this->cols())) {
       throw std::range_error("bound check errors");
     }
-    return m_plain_object[row * this->cols() + col];
+    return m_storage[row * this->cols() + col];
   }
   const Scalar& operator[](Index i) const
   {
-    return m_plain_object[i];
+    return m_storage[i];
   }
 
   Index rows() const { return m_rows; }
   Index cols() const { return m_cols; }
-  Index size() const { return m_plain_object.size(); }
+  Index size() const { return m_storage.size(); }
 private:
-  InternalStorage<Scalar> m_plain_object;
+  InternalStorage<Scalar> m_storage;
   Index m_rows = 0;
   Index m_cols = 0;
 };
 
 namespace detail {
 
-  template<typename Scalar>
-    using default_init_vector = std::vector<Scalar, util::default_init_allocator<Scalar>>;
-
   // postpone the concept here, because during the construction of the
   // MatrixBase, it doesn't know anything about Derived.
   template<typename Scalar>
-    requires IsMatrixBaseImplemented<Matrix<Scalar, detail::default_init_vector>, Scalar>
+    requires IsMatrixBaseImplemented<Matrix<Scalar, default_init_vector>, Scalar>
     class Test_Matrix_With_Concept {};
   // explicit instantiation, only test some type
   template class Test_Matrix_With_Concept<int>;
