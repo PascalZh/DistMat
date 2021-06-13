@@ -32,34 +32,34 @@ template<typename OtherDerived>\
 template<typename Derived, typename Scalar>
 class MatrixBase {
 public:
-  Derived&       derived()       { return *static_cast<Derived*>(this); }
-  const Derived& derived() const { return *static_cast<const Derived*>(this); }
+  constexpr Derived&       derived()       { return *static_cast<Derived*>(this); }
+  constexpr const Derived& derived() const { return *static_cast<const Derived*>(this); }
 
-  const Derived& const_derived()       { return const_cast<const Derived&>(derived()); }
-  const Derived& const_derived() const { return derived(); }
+  constexpr const Derived& const_derived()       { return const_cast<const Derived&>(derived()); }
+  constexpr const Derived& const_derived() const { return derived(); }
 
-  Scalar& operator()(Index row, Index col)
+  constexpr Scalar& operator()(Index row, Index col)
   {
     return const_cast<Scalar&>(const_derived()(row, col));
   }
-  Scalar& at(Index row, Index col)
+  constexpr Scalar& at(Index row, Index col)
   {
     return const_cast<Scalar&>(const_derived().at(row, col));
   }
 
   //> Access coefficients with just one index just like the matrix is spanned
   // into a vector with row major.
-  Scalar& operator[](Index i)
+  constexpr Scalar& operator[](Index i)
   {
     return const_cast<Scalar&>(const_derived()[i]);
   }
 
   ///> Define one of three for Derived if only other two are defined.
-  Index rows() const { return derived().size() / derived().cols(); }
-  Index cols() const { return derived().size() / derived().rows(); }
-  Index size() const { return derived().rows() * derived().cols(); }
+  constexpr Index rows() const { return derived().size() / derived().cols(); }
+  constexpr Index cols() const { return derived().size() / derived().rows(); }
+  constexpr Index size() const { return derived().rows() * derived().cols(); }
 
-  bool isSquare() const { return derived().rows() == derived().cols(); }
+  constexpr bool isSquare() const { return derived().rows() == derived().cols(); }
 
   Derived transpose() const;
 
@@ -247,9 +247,10 @@ _Derived operator-(const MatrixBase<_Derived, _Scalar>& mat)
 DISTMAT_TFUNC
 std::ostream& operator<<(std::ostream& out, const MatrixBase<_Derived, _Scalar>& mat)
 {
-  for (Index row = 0; row < mat.derived().rows(); ++row) {
-    for (Index col = 0; col < mat.derived().cols(); ++col) {
-      out << mat.derived()(row, col) << " ";
+  auto& der = mat.derived();
+  for (Index row = 0; row < der.rows(); ++row) {
+    for (Index col = 0; col < der.cols(); ++col) {
+      out << der(row, col) << " ";
     }
     out << endl;
   }

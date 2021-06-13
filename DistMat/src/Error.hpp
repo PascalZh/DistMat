@@ -1,8 +1,8 @@
 #pragma once
+#include "Type.hpp"
 #include <stdexcept>
 #include <string>
 #include <iostream>
-#include "Type.hpp"
 
 namespace distmat
 {

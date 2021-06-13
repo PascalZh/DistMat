@@ -141,5 +141,11 @@ int main(int argc, char const *argv[])
   auto D = Matrix<double>::eye(3, 5);
   cout << "eye:\n" << D << endl;
   cout << D * 3.0 << endl;
+
+  constexpr auto v = Matrix<int, 3, 3>({1, 2, 3})[2];
+  constexpr auto w = Matrix<int, 3, 3>({1, 2, 3}).at(0, 1);
+  auto E = Matrix<double, 3, v>({1, 2});
+  cout << E << endl;
+  cout << w << endl;
   return 0;
 }
