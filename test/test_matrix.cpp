@@ -143,9 +143,12 @@ int main(int argc, char const *argv[])
   cout << D * 3.0 << endl;
 
   constexpr auto v = Matrix<int, 3, 3>({1, 2, 3})[2];
-  constexpr auto w = Matrix<int, 3, 3>({1, 2, 3}).at(0, 1);
-  auto E = Matrix<double, 3, v>({1, 2});
+  constexpr auto w = Matrix<int, 3, 3>({1, 2, 3}).at(0, 2);
+  constexpr auto E = Matrix<double, 3, v>({1, 2});
   cout << E << endl;
   cout << w << endl;
+
+  constexpr auto F = Matrix<double, 3, 3>({0, 0, 1});
+  constexpr auto G = E * F;
   return 0;
 }

@@ -74,7 +74,7 @@ public:
   template<typename T = Scalar>
     requires is_same_v<T, Scalar> && (Rows == -1) && (Cols == -1)
   Matrix(Index rows, Index cols)
-    : m_storage(rows * cols), m_shape(rows, cols) {}
+    : m_storage(rows * cols), m_shape{rows, cols} {}
 
   template<typename T = Scalar>
     requires is_same_v<T, Scalar>
@@ -85,7 +85,7 @@ public:
       static_assert(!is_same_v<T, T>, "Can not initialize the matrix without shape specified!");
     }
   }
-    
+
   ~Matrix() = default;
 
   using Base::operator=;
@@ -135,14 +135,53 @@ public:
     return m_storage[i];
   }
 
-  // TODO: constexpr
   constexpr Index rows() const { return m_shape.rows(); }
   constexpr Index cols() const { return m_shape.cols(); }
   constexpr Index size() const { return m_storage.size(); }
+
 private:
   InternalStorage m_storage;
   Shape<Rows, Cols> m_shape;
+
+public:  // Some constexpr version of functions
+
+  using Base::eye;
+  using Base::zeros;
+  using Base::ones;
+  using Base::fill;
+  static constexpr Matrix eye()
+    requires (Rows > 0) && (Cols > 0)
+  {
+    auto ret = zeros();
+    for (Index i = 0; i < std::min(Rows, Cols); ++i) {
+      ret(i, i) = traits::scalar_traits<Scalar>::one;
+    }
+    return ret;
+  }
+  static constexpr Matrix zeros()
+    requires (Rows > 0) && (Cols > 0) { return fill(traits::scalar_traits<Scalar>::zero); }
+  static constexpr Matrix ones()
+    requires (Rows > 0) && (Cols > 0) { return fill(traits::scalar_traits<Scalar>::one); }
+  static constexpr Matrix fill(const Scalar& fillValue)
+    requires (Rows > 0) && (Cols > 0)
+  {
+    Matrix ret;
+    for (Index i = 0; i < ret.size(); ++i) {
+      ret[i] = fillValue;
+    }
+    return ret;
+  }
+
 };
+
+template<typename _Scalar, int _Rows, int _Cols>
+  requires (_Rows > 0) && (_Cols > 0)
+constexpr Matrix<_Scalar, _Rows, _Cols> operator*(const Matrix<_Scalar, _Rows, _Cols>& lhs, const Matrix<_Scalar, _Rows, _Cols>& rhs)
+{
+  auto tmp = Matrix<_Scalar, _Rows, _Cols>::zeros();
+  mul::multiplyMatrix<Index>(lhs, rhs, tmp);
+  return tmp;
+}
 
 namespace detail {
 

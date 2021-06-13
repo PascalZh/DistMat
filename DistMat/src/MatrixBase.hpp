@@ -168,7 +168,7 @@ template<typename Derived, typename Scalar>
   {
     Derived ret = Derived::zeros(row, col);
     for (Index i = 0; i < std::min(row, col); ++i) {
-      ret(i, i) = 1;
+      ret(i, i) = traits::scalar_traits<Scalar>::one;
     }
     return ret;
   }
