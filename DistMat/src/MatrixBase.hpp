@@ -59,7 +59,7 @@ public:
   constexpr Index cols() const { return derived().size() / derived().rows(); }
   constexpr Index size() const { return derived().rows() * derived().cols(); }
 
-  constexpr bool isSquare() const { return derived().rows() == derived().cols(); }
+  constexpr bool is_square() const { return derived().rows() == derived().cols(); }
 
   Derived transpose() const;
 
@@ -69,28 +69,28 @@ public:
   static Derived fill(Index row, Index col, Scalar fillValue);
 
 // ********************** implimentations of arithematics **************************
-  void mulByScalar(const Scalar& scalar);
+  void MulByScalar(const Scalar& scalar);
 
   /// Multiply two square matrices and assign to the `dst`.
   /// `dst = (*this) * dst`
   DISTMAT_MEM_TFUNC
-  void mulLeftTo(OtherDerived& dst) const
+  void MulLeftTo(OtherDerived& dst) const
   {
     CHECK_DIM(dst, derived());
-    assert(isSquare());
+    assert(is_square());
     Derived tmp(dst.rows(), 1);
-    mul::multiplyMatrixLeftToInplace<Index>(dst, derived(), tmp);
+    mul::MultiplyMatrixLeftToInplace<Index>(dst, derived(), tmp);
   }
 
   /// Multiply two square matrices and assign to the `dst`.
   /// `dst = dst * (*this)`
   DISTMAT_MEM_TFUNC
-  void mulRightTo(OtherDerived& dst) const
+  void MulRightTo(OtherDerived& dst) const
   {
     CHECK_DIM(dst, derived());
-    assert(isSquare());
+    assert(is_square());
     Derived tmp(dst.rows(), 1);
-    mul::multiplyMatrixRightToInplace<Index>(dst, derived(), tmp);
+    mul::MultiplyMatrixRightToInplace<Index>(dst, derived(), tmp);
   }
 
 #define DEFINE_FUNC_EVAL_ADD_SUB_TO(func, op) \
@@ -103,9 +103,9 @@ public:
       other[i] op derived()[i];\
     });\
   }
-  DEFINE_FUNC_EVAL_ADD_SUB_TO(evalTo, =)
-  DEFINE_FUNC_EVAL_ADD_SUB_TO(addTo, +=)
-  DEFINE_FUNC_EVAL_ADD_SUB_TO(subTo, -=)
+  DEFINE_FUNC_EVAL_ADD_SUB_TO(EvalTo, =)
+  DEFINE_FUNC_EVAL_ADD_SUB_TO(AddTo, +=)
+  DEFINE_FUNC_EVAL_ADD_SUB_TO(SubTo, -=)
 #undef DEFINE_FUNC_EVAL_ADD_SUB_TO
 
 // *********************** Operators ***********************
@@ -118,28 +118,28 @@ public:
     return derived();\
   }
   // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)
-  DEFINE_ASSIGN_OPERATOR(=, evalTo)
-  DEFINE_ASSIGN_OPERATOR(+=, addTo)
-  DEFINE_ASSIGN_OPERATOR(-=, subTo)
+  DEFINE_ASSIGN_OPERATOR(=, EvalTo)
+  DEFINE_ASSIGN_OPERATOR(+=, AddTo)
+  DEFINE_ASSIGN_OPERATOR(-=, SubTo)
 #undef DEFINE_ASSIGN_OPERATOR
 
   Derived& operator/=(const Scalar& scalar)
   {
-    derived().mulByScalar(traits::scalar_traits<Scalar>::one / scalar);
+    derived().MulByScalar(traits::scalar_traits<Scalar>::one / scalar);
     return derived();
   }
 
   bool operator==(const MatrixBase<Derived, Scalar>& other) const
   {
     CHECK_DIM(derived(), other.derived());
-    bool isEqual = true;
+    bool is_equal = true;
     for (Index i = 0; i < other.derived().size(); ++i) {
       if (derived()[i] != other.derived()[i]) {
-        isEqual = false;
+        is_equal = false;
         break;
       }
     }
-    return isEqual;
+    return is_equal;
   }
 
 }; // class MatrixBase
@@ -157,7 +157,7 @@ template<typename Derived, typename Scalar>
   }
 
 template<typename Derived, typename Scalar>
-  void MatrixBase<Derived, Scalar>::mulByScalar(const Scalar& scalar)
+  void MatrixBase<Derived, Scalar>::MulByScalar(const Scalar& scalar)
   {
     ranges::for_each(views::iota(Index(0), derived().size()),
       [this, scalar](Index i) { derived()[i] *= scalar; });
@@ -190,7 +190,7 @@ DISTMAT_BINARY_TFUNC
 _LDerived operator+(const _LDerived& lhs, const MatrixBase<_RDerived, _Scalar>& rhs)\
 {
   _LDerived tmp = lhs;
-  rhs.derived().addTo(tmp);
+  rhs.derived().AddTo(tmp);
   return tmp;
 }
 
@@ -198,7 +198,7 @@ DISTMAT_BINARY_TFUNC
 _LDerived operator-(const _LDerived& lhs, const MatrixBase<_RDerived, _Scalar>& rhs)\
 {
   _LDerived tmp = lhs;
-  rhs.derived().subTo(tmp);
+  rhs.derived().SubTo(tmp);
   return tmp;
 }
 
@@ -215,7 +215,7 @@ DISTMAT_TFUNC
 _Derived operator*(const _Scalar& lhs, const MatrixBase<_Derived, _Scalar>& rhs)
 {
   _Derived tmp = rhs.derived();
-  tmp.mulByScalar(lhs);
+  tmp.MulByScalar(lhs);
   return tmp;
 }
 

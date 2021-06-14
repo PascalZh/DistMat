@@ -37,6 +37,7 @@ constexpr explicit Matrix(InternalStorage storage)
   }
 }
 ```
+
 Other common functions are shared.
 
 ### Stack version

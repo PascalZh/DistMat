@@ -16,8 +16,11 @@ namespace distmat
 using ::util::lang::range;
 using ::util::lang::indices;
 
-template<typename Scalar>
-  using default_init_vector = std::vector<Scalar, util::default_init_allocator<Scalar>>;
+template<int X>
+  concept Dynamic = (X == -1);
+
+template<int X>
+  concept Fixed = (X > 0);
 
 template<typename T>
   struct error_no_internal_storage {
@@ -27,7 +30,7 @@ template<typename T>
 template<int Rows, int Cols, typename T>
   struct internal_storage_selector {
     using type = std::conditional_t<Rows == -1 && Cols == -1,
-      default_init_vector<T>,
+      std::vector<T, util::default_init_allocator<T>>,
       std::conditional_t<(Rows > 0 && Cols > 0),
         std::array<T, Rows * Cols>,
         error_no_internal_storage<T>
@@ -35,31 +38,36 @@ template<int Rows, int Cols, typename T>
       >;
   };
 
-template<
-  IsScalar Scalar,
-  int Rows = -1,
-  int Cols = -1,
-  typename InternalStorage = internal_storage_selector<Rows, Cols, Scalar>::type
-  >
-  class Matrix;
+template<int Rows, int Cols>
+  struct DefaultShape {};
 
 template<int Rows, int Cols>
-  struct Shape {
-    Index rows() const { return m_rows; }
-    Index cols() const { return m_cols; }
-    Index m_rows;
-    Index m_cols;
+  requires Dynamic<Rows> && Dynamic<Cols>
+  struct DefaultShape<Rows, Cols> {
+    Index rows() const { return rows_; }
+    Index cols() const { return cols_; }
+    Index rows_;
+    Index cols_;
   };
 
 template<int Rows, int Cols>
-  requires (Rows > 0) && (Cols > 0)
-  struct Shape<Rows, Cols> {
+  requires Fixed<Rows> && Fixed<Cols>
+  struct DefaultShape<Rows, Cols> {
     constexpr Index rows() const { return Rows; }
     constexpr Index cols() const { return Cols; }
   };
 
-template<IsScalar Scalar, int Rows, int Cols, typename InternalStorage>
-class Matrix : public MatrixBase<Matrix<Scalar, Rows, Cols, InternalStorage>, Scalar> {
+template<
+  IsScalar Scalar,
+  int Rows = -1,
+  int Cols = -1,
+  typename InternalStorage = internal_storage_selector<Rows, Cols, Scalar>::type,
+  typename Shape = DefaultShape<Rows, Cols>
+  >
+  class Matrix;
+
+template<IsScalar Scalar, int Rows, int Cols, typename InternalStorage, typename Shape>
+class Matrix : public MatrixBase<Matrix<Scalar, Rows, Cols, InternalStorage, Shape>, Scalar> {
 public:
   using scalar_type = Scalar;
   using Base = MatrixBase<Matrix, Scalar>;
@@ -72,28 +80,21 @@ public:
   // `vector(size_t n)` will default-insert the elements, thus value-initialize the elements.
   // So we replace the default allocator with the Utils::default_init_allocator
   template<typename T = Scalar>
-    requires is_same_v<T, Scalar> && (Rows == -1) && (Cols == -1)
-  Matrix(Index rows, Index cols)
-    : m_storage(rows * cols), m_shape{rows, cols} {}
+    requires is_same_v<T, Scalar> && Dynamic<Rows> && Dynamic<Cols>
+  Matrix(Index rows, Index cols) : storage_(rows * cols), shape_{rows, cols} {}
 
   template<typename T = Scalar>
-    requires is_same_v<T, Scalar>
-  constexpr explicit Matrix(InternalStorage storage)
-    : m_storage{std::move(storage)}
-  {
-    if constexpr(!(Rows > 0 && Cols > 0)) {
-      static_assert(!is_same_v<T, T>, "Can not initialize the matrix without shape specified!");
-    }
-  }
+    requires is_same_v<T, Scalar> && Fixed<Rows> && Fixed<Cols>
+  constexpr explicit Matrix(InternalStorage storage) : storage_{std::move(storage)} {}
 
-  ~Matrix() = default;
+  constexpr ~Matrix() {}
 
   using Base::operator=;
   Matrix& operator=(Matrix&& other) = default;
   Matrix& operator=(const Matrix& other)
   {
     if (this != &other) {
-      other.evalTo(*this);
+      other.EvalTo(*this);
     }
     return *this;
   }
@@ -105,8 +106,8 @@ public:
   /// 7 8 9
   Matrix& operator=(initializer_list<Scalar> l)
   {
-    assert(l.size() <= m_storage.size());
-    auto it = m_storage.begin();
+    assert(l.size() <= storage_.size());
+    auto it = storage_.begin();
     for (auto x : l) {
       *it = x;
       ++it;
@@ -120,7 +121,7 @@ public:
   constexpr const Scalar& operator()(Index row, Index col) const
   {
     // use C order instead of Fortran order
-    return m_storage[row * this->cols() + col];
+    return storage_[row * this->cols() + col];
   }
   constexpr const Scalar& at(Index row, Index col) const
   {
@@ -128,20 +129,20 @@ public:
     if (!(row < this->rows() && col < this->cols())) {
       throw std::range_error("bound check errors");
     }
-    return m_storage[row * this->cols() + col];
+    return storage_[row * this->cols() + col];
   }
   constexpr const Scalar& operator[](Index i) const
   {
-    return m_storage[i];
+    return storage_[i];
   }
 
-  constexpr Index rows() const { return m_shape.rows(); }
-  constexpr Index cols() const { return m_shape.cols(); }
-  constexpr Index size() const { return m_storage.size(); }
+  constexpr Index rows() const { return shape_.rows(); }
+  constexpr Index cols() const { return shape_.cols(); }
+  constexpr Index size() const { return storage_.size(); }
 
 private:
-  InternalStorage m_storage;
-  Shape<Rows, Cols> m_shape;
+  InternalStorage storage_;
+  Shape shape_;
 
 public:  // Some constexpr version of functions
 
@@ -188,7 +189,7 @@ namespace detail {
   // postpone the concept here, because during the construction of the
   // MatrixBase, it doesn't know anything about Derived.
   template<typename Scalar>
-    requires IsMatrixBaseImplemented<Matrix<Scalar, -1, -1, default_init_vector<Scalar> >, Scalar>
+    requires IsMatrixBaseImplemented<Matrix<Scalar, -1, -1>, Scalar>
     class Test_Matrix_With_Concept {};
   // explicit instantiation, only test some type
   template class Test_Matrix_With_Concept<int>;

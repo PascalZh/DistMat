@@ -105,6 +105,7 @@ int main(int argc, char const *argv[])
   A = {1, 2, 1, 4, 5, 4, 1, -1, 0};
   Matrix<int> B(3, 3);
   B = -A;
+  B = A;
 
   Matrix<int> C(3, 3);
   mul::multiplyMatrix<Index>(A, B, C);
@@ -116,8 +117,8 @@ int main(int argc, char const *argv[])
   };
 
   cout << "A = \n" << A << endl;
-  C.mulLeftTo(A);
-  C.mulRightTo(A);
+  C.MulLeftTo(A);
+  C.MulRightTo(A);
   cout << A << endl;
   cout << C.transpose() << endl;
   cout << A << endl;
@@ -143,6 +144,7 @@ int main(int argc, char const *argv[])
   cout << D * 3.0 << endl;
 
   constexpr auto v = Matrix<int, 3, 3>({1, 2, 3})[2];
+  // constexpr auto vv = Matrix<int>({1, 2, 3}); // should error
   constexpr auto w = Matrix<int, 3, 3>({1, 2, 3}).at(0, 2);
   constexpr auto E = Matrix<double, 3, v>({1, 2});
   cout << E << endl;

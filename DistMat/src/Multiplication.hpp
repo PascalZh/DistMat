@@ -7,7 +7,7 @@ namespace mul {
 /// A and B are both nxn matrices
 /// \param tmp      a n-dimension vector for temporal storage of middle results, must be zero before calling
 template<typename Index>
-constexpr void multiplyMatrixRightToInplace(auto& A, auto& B, auto& tmp)
+constexpr void MultiplyMatrixRightToInplace(auto& A, auto& B, auto& tmp)
 {
   const Index n = A.rows();
   for (Index i = 0; i < n; i++) {
@@ -26,9 +26,9 @@ constexpr void multiplyMatrixRightToInplace(auto& A, auto& B, auto& tmp)
 }
 
 /// A = B * A
-/// \see multiplyMatrixRightToInplace
+/// \see MultiplyMatrixRightToInplace
 template<typename Index>
-constexpr void multiplyMatrixLeftToInplace(auto& A, auto& B, auto& tmp)
+constexpr void MultiplyMatrixLeftToInplace(auto& A, auto& B, auto& tmp)
 {
   const Index n = A.rows();
   for (Index j = 0; j < n; j++) {
