@@ -59,7 +59,7 @@ public:
   constexpr Index cols() const { return derived().size() / derived().rows(); }
   constexpr Index size() const { return derived().rows() * derived().cols(); }
 
-  constexpr bool is_square() const { return derived().rows() == derived().cols(); }
+  constexpr bool isSquare() const { return derived().rows() == derived().cols(); }
 
   Derived transpose() const;
 
@@ -69,7 +69,7 @@ public:
   static Derived fill(Index row, Index col, Scalar fillValue);
 
 // ********************** implimentations of arithematics **************************
-  void MulByScalar(const Scalar& scalar);
+  void mulByScalar(const Scalar& scalar);
 
   /// Multiply two square matrices and assign to the `dst`.
   /// `dst = (*this) * dst`
@@ -77,9 +77,9 @@ public:
   void MulLeftTo(OtherDerived& dst) const
   {
     CHECK_DIM(dst, derived());
-    assert(is_square());
+    assert(isSquare());
     Derived tmp(dst.rows(), 1);
-    mul::MultiplyMatrixLeftToInplace<Index>(dst, derived(), tmp);
+    mul::multiplyMatrixLeftToInplace<Index>(dst, derived(), tmp);
   }
 
   /// Multiply two square matrices and assign to the `dst`.
@@ -88,9 +88,9 @@ public:
   void MulRightTo(OtherDerived& dst) const
   {
     CHECK_DIM(dst, derived());
-    assert(is_square());
+    assert(isSquare());
     Derived tmp(dst.rows(), 1);
-    mul::MultiplyMatrixRightToInplace<Index>(dst, derived(), tmp);
+    mul::multiplyMatrixRightToInplace<Index>(dst, derived(), tmp);
   }
 
 #define DEFINE_FUNC_EVAL_ADD_SUB_TO(func, op) \
@@ -103,9 +103,9 @@ public:
       other[i] op derived()[i];\
     });\
   }
-  DEFINE_FUNC_EVAL_ADD_SUB_TO(EvalTo, =)
-  DEFINE_FUNC_EVAL_ADD_SUB_TO(AddTo, +=)
-  DEFINE_FUNC_EVAL_ADD_SUB_TO(SubTo, -=)
+  DEFINE_FUNC_EVAL_ADD_SUB_TO(evalTo, =)
+  DEFINE_FUNC_EVAL_ADD_SUB_TO(addTo, +=)
+  DEFINE_FUNC_EVAL_ADD_SUB_TO(subTo, -=)
 #undef DEFINE_FUNC_EVAL_ADD_SUB_TO
 
 // *********************** Operators ***********************
@@ -118,28 +118,28 @@ public:
     return derived();\
   }
   // NOLINTNEXTLINE(cppcoreguidelines-c-copy-assignment-signature)
-  DEFINE_ASSIGN_OPERATOR(=, EvalTo)
-  DEFINE_ASSIGN_OPERATOR(+=, AddTo)
-  DEFINE_ASSIGN_OPERATOR(-=, SubTo)
+  DEFINE_ASSIGN_OPERATOR(=, evalTo)
+  DEFINE_ASSIGN_OPERATOR(+=, addTo)
+  DEFINE_ASSIGN_OPERATOR(-=, subTo)
 #undef DEFINE_ASSIGN_OPERATOR
 
   Derived& operator/=(const Scalar& scalar)
   {
-    derived().MulByScalar(traits::scalar_traits<Scalar>::one / scalar);
+    derived().mulByScalar(traits::scalar_traits<Scalar>::one / scalar);
     return derived();
   }
 
   bool operator==(const MatrixBase<Derived, Scalar>& other) const
   {
     CHECK_DIM(derived(), other.derived());
-    bool is_equal = true;
+    bool isEqual = true;
     for (Index i = 0; i < other.derived().size(); ++i) {
       if (derived()[i] != other.derived()[i]) {
-        is_equal = false;
+        isEqual = false;
         break;
       }
     }
-    return is_equal;
+    return isEqual;
   }
 
 }; // class MatrixBase
@@ -157,7 +157,7 @@ template<typename Derived, typename Scalar>
   }
 
 template<typename Derived, typename Scalar>
-  void MatrixBase<Derived, Scalar>::MulByScalar(const Scalar& scalar)
+  void MatrixBase<Derived, Scalar>::mulByScalar(const Scalar& scalar)
   {
     ranges::for_each(views::iota(Index(0), derived().size()),
       [this, scalar](Index i) { derived()[i] *= scalar; });
@@ -190,7 +190,7 @@ DISTMAT_BINARY_TFUNC
 _LDerived operator+(const _LDerived& lhs, const MatrixBase<_RDerived, _Scalar>& rhs)\
 {
   _LDerived tmp = lhs;
-  rhs.derived().AddTo(tmp);
+  rhs.derived().addTo(tmp);
   return tmp;
 }
 
@@ -198,7 +198,7 @@ DISTMAT_BINARY_TFUNC
 _LDerived operator-(const _LDerived& lhs, const MatrixBase<_RDerived, _Scalar>& rhs)\
 {
   _LDerived tmp = lhs;
-  rhs.derived().SubTo(tmp);
+  rhs.derived().subTo(tmp);
   return tmp;
 }
 
@@ -215,7 +215,7 @@ DISTMAT_TFUNC
 _Derived operator*(const _Scalar& lhs, const MatrixBase<_Derived, _Scalar>& rhs)
 {
   _Derived tmp = rhs.derived();
-  tmp.MulByScalar(lhs);
+  tmp.mulByScalar(lhs);
   return tmp;
 }
 
@@ -285,4 +285,4 @@ template<typename Derived, typename Scalar>
   } && IsAnyTwoOf_rows_cols_size_Implemented<Derived>
   && IsScalar<Scalar> && std::regular<Derived>;
 
-} // namespace distmat
+}  // namespace distmat

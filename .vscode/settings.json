@@ -52,7 +52,8 @@
     "ratio": "cpp",
     "map": "cpp",
     "cstring": "cpp",
-    "cinttypes": "cpp"
+    "cinttypes": "cpp",
+    "span": "cpp"
   },
   "cSpell.words": [
     "NOLINT",

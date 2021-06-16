@@ -12,7 +12,6 @@
 
 namespace distmat
 {
-
 using ::util::lang::range;
 using ::util::lang::indices;
 
@@ -22,18 +21,15 @@ template<int X>
 template<int X>
   concept Fixed = (X > 0);
 
-template<typename T>
-  struct error_no_internal_storage {
-    static_assert(!is_same_v<T, T>, "No internal storage is matched!");
-  };
 
-template<int Rows, int Cols, typename T>
+template<typename T, int Rows, int Cols>
   struct internal_storage_selector {
+    struct error_no_internal_storage { static_assert(Rows != Rows, "No internal storage is matched!"); };
     using type = std::conditional_t<Rows == -1 && Cols == -1,
       std::vector<T, util::default_init_allocator<T>>,
       std::conditional_t<(Rows > 0 && Cols > 0),
         std::array<T, Rows * Cols>,
-        error_no_internal_storage<T>
+        error_no_internal_storage
         >
       >;
   };
@@ -61,7 +57,7 @@ template<
   IsScalar Scalar,
   int Rows = -1,
   int Cols = -1,
-  typename InternalStorage = internal_storage_selector<Rows, Cols, Scalar>::type,
+  typename InternalStorage = internal_storage_selector<Scalar, Rows, Cols>::type,
   typename Shape = DefaultShape<Rows, Cols>
   >
   class Matrix;
@@ -94,7 +90,7 @@ public:
   Matrix& operator=(const Matrix& other)
   {
     if (this != &other) {
-      other.EvalTo(*this);
+      other.evalTo(*this);
     }
     return *this;
   }
@@ -140,6 +136,10 @@ public:
   constexpr Index cols() const { return shape_.cols(); }
   constexpr Index size() const { return storage_.size(); }
 
+  void foo(Scalar other)
+  {
+    other.call_some_func_that_dont_exist(); // OK, this is not instantiated if not called, thus don't check
+  }
 private:
   InternalStorage storage_;
   Shape shape_;
@@ -173,7 +173,7 @@ public:  // Some constexpr version of functions
     return ret;
   }
 
-};
+};  // class Matrix
 
 template<typename _Scalar, int _Rows, int _Cols>
   requires (_Rows > 0) && (_Cols > 0)
@@ -195,6 +195,6 @@ namespace detail {
   template class Test_Matrix_With_Concept<int>;
   template class Test_Matrix_With_Concept<double>;
 
-} // namespace detail
+}  // namespace detail
 
-} // end of namespace distmat
+}  // end of namespace distmat

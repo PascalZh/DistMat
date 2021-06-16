@@ -42,3 +42,9 @@ Other common functions are shared.
 
 ### Stack version
 Stack version of `Matrix` is provided to be `constexpr`, matrix plus/minus/multiplication are capable of being evaluated at compile time.
+
+# Naming conventions
+1. function and variable: `fooBar`
+2. private member variable: `foo_`, `fooBar_`
+3. class name: `MyClass`, `foo_bar`(for template meta programming)
+4. special case `Is_rows_Implemented`: `rows` is preserved lowercase and separated by `_` because `rows` represents a function named `rows`.
