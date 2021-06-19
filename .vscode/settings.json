@@ -53,7 +53,10 @@
     "map": "cpp",
     "cstring": "cpp",
     "cinttypes": "cpp",
-    "span": "cpp"
+    "span": "cpp",
+    "any": "cpp",
+    "variant": "cpp",
+    "source_location": "cpp"
   },
   "cSpell.words": [
     "NOLINT",

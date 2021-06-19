@@ -2,8 +2,6 @@
 #include "MatrixBase.hpp"
 #include "Util.hpp"
 
-#include "range.hpp"
-
 #include <vector>
 #include <memory>
 #include <array>
@@ -12,8 +10,6 @@
 
 namespace distmat
 {
-using ::util::lang::range;
-using ::util::lang::indices;
 
 template<int X>
   concept Dynamic = (X == -1);
@@ -21,18 +17,8 @@ template<int X>
 template<int X>
   concept Fixed = (X > 0);
 
-
-template<typename T, int Rows, int Cols>
-  struct internal_storage_selector {
-    struct error_no_internal_storage { static_assert(Rows != Rows, "No internal storage is matched!"); };
-    using type = std::conditional_t<Rows == -1 && Cols == -1,
-      std::vector<T, util::default_init_allocator<T>>,
-      std::conditional_t<(Rows > 0 && Cols > 0),
-        std::array<T, Rows * Cols>,
-        error_no_internal_storage
-        >
-      >;
-  };
+template<typename T>
+struct error_no_internal_storage { static_assert(util::always_false_v<T>, "No internal storage is matched!"); };
 
 template<int Rows, int Cols>
   struct DefaultShape {};
@@ -57,7 +43,13 @@ template<
   IsScalar Scalar,
   int Rows = -1,
   int Cols = -1,
-  typename InternalStorage = internal_storage_selector<Scalar, Rows, Cols>::type,
+  typename InternalStorage = conditional_t<Rows == -1 && Cols == -1,
+    vector<Scalar, util::default_init_allocator<Scalar>>,
+    conditional_t<(Rows > 0 && Cols > 0),
+      std::array<Scalar, Rows * Cols>,
+      error_no_internal_storage<Scalar>
+      >
+    >,
   typename Shape = DefaultShape<Rows, Cols>
   >
   class Matrix;

@@ -1,4 +1,5 @@
 #pragma once
+#include "Util.hpp"
 #include <concepts>
 /// Type traits for matrix and scalar.
 
@@ -7,7 +8,7 @@ namespace traits {
   
 template<typename Scalar>
   struct scalar_traits {
-    static_assert(!std::is_same_v<Scalar, Scalar>, "no scalar_traits for typename Scalar");
+    static_assert(util::always_false_v<Scalar>, "no scalar_traits for typename Scalar");
   };
 
 template<typename Scalar>

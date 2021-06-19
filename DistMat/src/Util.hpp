@@ -1,10 +1,16 @@
 #pragma once
+// Third party
+#include "range.hpp"
+
 #include <vector>
+#include <utility>
 
 namespace distmat
 {
 namespace util
 {
+using ::util::lang::range;
+using ::util::lang::indices;
 
 // Allocator adaptor that interposes construct() calls to
 // convert value initialization into default initialization.
@@ -32,6 +38,20 @@ public:
                    ptr, std::forward<Args>(args)...);
   }
 };
+
+namespace detail {
+  template<class T, T... Is, class F>
+  constexpr void loop(std::integer_sequence<T, Is...>, F&& f) {
+    (f(std::integral_constant<T, Is>{}), ...);// C++17 fold expression
+  }
+}// detail
+
+template<class T, T count, class F>
+constexpr void loop(F&& f) {
+  detail::loop(std::make_integer_sequence<T, count>{}, std::forward<F>(f));
+}
+
+template<class> inline constexpr bool always_false_v = false;
 
 } // namespace util
 } // namespace distmat
