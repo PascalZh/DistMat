@@ -50,11 +50,19 @@ Stack version of `Matrix` is provided to be `constexpr`, matrix plus/minus/multi
 4. special case `Is_rows_Implemented`: `rows` is preserved lowercase and separated by `_` because `rows` represents a function named `rows`.
 
 # Compile time parsing matrix expression for optimizing
+
 ## Feasibility experiments
+
 ### 2021/6/19: try optimize `x = x + 2` to `x += 2`
+
 **details**:
 In `experiment_expr.cpp`, `x = x + 2` does compile to `add eax, 2`, but it relies `-O2` compiler flag.
+
 **conclusion**:
 It's impossible for `operator=` to figure out whether `*this` is the same as the `x` in `x + 2` at compile time on language level. But the optimization does happen on some compilers and with some specific compiler flags.
 
 So, maybe we can write some optimization at run-time and rely on the compiler to optimize out unnecessary codes like in `experiment_expr.cpp`?
+
+### 2021/6/20: learn Eigen
+
+When evaluating expressions that `x + x`, Eigen return a expression with the type representing the expression and two references as members (`m_lhs` and `m_rhs`). When evaluating `operator=`, Eigen will choose to do no alias assignment or alias assignment depending on the expression. e.g. `x = x + x` expands to expressions like `x[i] = x[i] + x[i]`, while `x = x * x` expands to `Matrix tmp(x * x); x = tmp`.
