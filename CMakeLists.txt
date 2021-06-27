@@ -14,6 +14,7 @@ option(DISTMAT_InstallExternalProject "Install external projects" OFF)
 set(RANGE_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/src/range)
 if(DISTMAT_InstallExternalProject)
   include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/InstallExternalProject.cmake")
+  return()
 endif()
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
