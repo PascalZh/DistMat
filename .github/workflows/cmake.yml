@@ -28,9 +28,10 @@ jobs:
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_CXX_COMPILER=g++-10
 
     - name: Install external dependencies
-      run: cmake -B ${{github.workspace}}/build -DDISTMAT_InstallExternalProject=ON -DEigen3_DIR=${{github.workspace}}/install/share/eigen3/cmake
-      run: cmake --build ${{github.workspace}}/build
-      run: cmake -B ${{github.workspace}}/build -DDISTMAT_InstallExternalProject=OFF
+      run: |
+        cmake -B ${{github.workspace}}/build -DDISTMAT_InstallExternalProject=ON -DEigen3_DIR=${{github.workspace}}/install/share/eigen3/cmake
+        cmake --build ${{github.workspace}}/build
+        cmake -B ${{github.workspace}}/build -DDISTMAT_InstallExternalProject=OFF
 
     - name: Build
       # Build your program with the given configuration
